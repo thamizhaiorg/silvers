@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Text, View, TouchableOpacity, BackHandler, Alert } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useAuth } from "../lib/auth-context";
-import { r2Service } from "../lib/r2-service";
 import AuthScreen from "../screens/auth";
 import ProductsScreen from "../components/products";
 import ProductFormScreen from "../components/prod-form";
@@ -457,38 +453,17 @@ export default function Page() {
     <StoreProvider>
       <ErrorBoundary>
         <View className="flex flex-1">
-          {currentScreen === 'sales' || currentScreen === 'options' || currentScreen === 'metafields' || currentScreen === 'items' || currentScreen === 'locations' || currentScreen === 'files' || isProductFormOpen || isCollectionFormOpen || isItemStockOpen ? (
-            // Full screen screens without header or bottom navigation (including product and collection forms)
-            <ErrorBoundary>
-              {renderMainContent()}
-            </ErrorBoundary>
-          ) : (
-            // Main app screens with header and bottom navigation
-            <>
-              <Header
-                currentScreen={currentScreen}
-                onNavigate={handleNavigate}
-                isGridView={isGridView}
-                setIsGridView={setIsGridView}
-                showManagement={showManagement}
-                setShowManagement={setShowManagement}
-                productFormProduct={productFormProduct}
-                isProductFormOpen={isProductFormOpen}
-                collectionFormCollection={collectionFormCollection}
-                isCollectionFormOpen={isCollectionFormOpen}
-              />
-              <ErrorBoundary>
-                {renderMainContent()}
-              </ErrorBoundary>
-              {/* Bottom Navigation for main screens */}
-              {(currentScreen === 'products' || currentScreen === 'collections' || currentScreen === 'cart' || currentScreen === 'profile') && (
-                <BottomNavigation
-                  activeTab={activeBottomTab}
-                  onTabPress={handleBottomTabPress}
-                  cartItemCount={0} // TODO: Connect to actual cart count
-                />
-              )}
-            </>
+          {/* All screens are now full-screen without header */}
+          <ErrorBoundary>
+            {renderMainContent()}
+          </ErrorBoundary>
+          {/* Bottom Navigation for main tab screens only */}
+          {(currentScreen === 'products' || currentScreen === 'collections' || currentScreen === 'cart' || currentScreen === 'profile') && (
+            <BottomNavigation
+              activeTab={activeBottomTab}
+              onTabPress={handleBottomTabPress}
+              cartItemCount={0} // TODO: Connect to actual cart count
+            />
           )}
         </View>
       </ErrorBoundary>
@@ -621,138 +596,4 @@ function MenuScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
   );
 }
 
-function Header({ currentScreen, onNavigate, isGridView, setIsGridView, showManagement, setShowManagement, productFormProduct, isProductFormOpen, collectionFormCollection, isCollectionFormOpen }: {
-  currentScreen: Screen;
-  onNavigate: (screen: Screen) => void;
-  isGridView: boolean;
-  setIsGridView: (isGrid: boolean) => void;
-  showManagement: boolean;
-  setShowManagement: (show: boolean) => void;
-  productFormProduct?: any;
-  isProductFormOpen?: boolean;
-  collectionFormCollection?: any;
-  isCollectionFormOpen?: boolean;
-}) {
-  const insets = useSafeAreaInsets();
-  const { peopleaProfile } = useAuth();
-  const [displayImageUrl, setDisplayImageUrl] = useState<string>('');
 
-  // Set image URL immediately when profile is available
-  useEffect(() => {
-    if (peopleaProfile?.profileImage) {
-      // If it's an R2 URL, generate signed URL
-      if (peopleaProfile.profileImage.includes('r2.cloudflarestorage.com')) {
-        const generateSignedUrl = async () => {
-          try {
-            const key = r2Service.extractKeyFromUrl(peopleaProfile.profileImage);
-            if (key) {
-              const signedUrl = await r2Service.getSignedUrl(key, 3600);
-              if (signedUrl) {
-                setDisplayImageUrl(signedUrl);
-                // Prefetch the image to cache it
-                Image.prefetch(signedUrl);
-              } else {
-                setDisplayImageUrl(peopleaProfile.profileImage);
-              }
-            } else {
-              setDisplayImageUrl(peopleaProfile.profileImage);
-            }
-          } catch (error) {
-            // Keep using original URL on error
-            setDisplayImageUrl(peopleaProfile.profileImage);
-          }
-        };
-        generateSignedUrl();
-      } else {
-        // For non-R2 URLs, use directly
-        setDisplayImageUrl(peopleaProfile.profileImage);
-        // Prefetch non-R2 images too
-        Image.prefetch(peopleaProfile.profileImage);
-      }
-    } else {
-      setDisplayImageUrl('');
-    }
-  }, [peopleaProfile?.profileImage]);
-
-  const getScreenInfo = (screen: Screen) => {
-    // If product form is open, show product title without "Products:" prefix
-    if (screen === 'products' && isProductFormOpen) {
-      const productTitle = productFormProduct?.title || '';
-      return {
-        title: productTitle,
-        icon: '📦'
-      };
-    }
-
-    // If collection form is open, show collection title without "Collections:" prefix
-    if (screen === 'collections' && isCollectionFormOpen) {
-      const collectionTitle = collectionFormCollection?.name || '';
-      return {
-        title: collectionTitle,
-        icon: '🏷️'
-      };
-    }
-
-    switch (screen) {
-      case 'products':
-        return { title: 'Products', icon: '📦' };
-      case 'collections':
-        return { title: 'Collections', icon: '🏷️' };
-      case 'options':
-        return { title: 'Options', icon: 'O' };
-      case 'metafields':
-        return { title: 'Metafields', icon: '#' };
-      case 'files':
-        return { title: 'Files', icon: '📁' };
-      case 'sales':
-        return { title: 'Sales', icon: '💰' };
-      case 'reports':
-        return { title: 'Reports', icon: '📈' };
-      default:
-        return { title: 'TAR POS', icon: '☰' };
-    }
-  };
-
-  const screenInfo = getScreenInfo(currentScreen);
-
-  return (
-    <View style={{ paddingTop: insets.top }}>
-      <View className="px-4 h-16 flex items-center flex-row justify-between bg-white border-b border-gray-200">
-        <View className="flex-row items-center">
-          {currentScreen === 'menu' ? (
-            <>
-              <TouchableOpacity
-                onPress={() => onNavigate('profile')}
-                className="w-8 h-8 rounded-full overflow-hidden mr-2"
-              >
-                <Image
-                  source={
-                    displayImageUrl && displayImageUrl.length > 0 && displayImageUrl !== ''
-                      ? { uri: displayImageUrl }
-                      : require('../../assets/adaptive-icon.png')
-                  }
-                  style={{ width: 32, height: 32 }}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => onNavigate('menu')}>
-                <Text className="text-xl font-semibold text-gray-900">{screenInfo.title}</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity
-              onPress={() => onNavigate('menu')}
-              className="flex-row items-center"
-            >
-              <Text className="text-xl mr-2">{screenInfo.icon}</Text>
-              <Text className="text-xl font-semibold text-gray-900">{screenInfo.title}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-
-      </View>
-    </View>
-  );
-}

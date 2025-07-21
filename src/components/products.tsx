@@ -362,7 +362,12 @@ export default function ProductsScreen({ isGridView = false, onClose }: Products
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+      {/* Header */}
+      <View className="bg-white px-4 py-4 border-b border-gray-200">
+        <Text className="text-xl font-bold text-gray-900">Products</Text>
+      </View>
+
       {/* Search Bar - Clean design without add/filter buttons */}
       <View className="bg-white px-4 py-3 border-b border-gray-100">
         <View className="flex-row items-center">

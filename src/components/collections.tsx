@@ -116,7 +116,12 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: insets.top }}>
+      {/* Header */}
+      <View className="bg-white px-4 py-4 border-b border-gray-200">
+        <Text className="text-xl font-bold text-gray-900">Collections</Text>
+      </View>
+
       {/* Clean Search Bar - Adapted from prod-form.tsx */}
       <View style={{
         flexDirection: 'row',

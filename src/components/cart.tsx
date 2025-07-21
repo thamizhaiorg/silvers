@@ -187,12 +187,9 @@ export default function CartScreen({ onClose }: CartScreenProps) {
   );
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View 
-        className="bg-white px-4 py-4 border-b border-gray-200"
-        style={{ paddingTop: insets.top + 16 }}
-      >
+      <View className="bg-white px-4 py-4 border-b border-gray-200">
         <View className="flex-row items-center justify-between">
           <Text className="text-xl font-bold text-gray-900">
             Cart ({cartItems.length})
