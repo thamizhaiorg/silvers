@@ -34,7 +34,7 @@ export default function HeroSection({
               {currentStore?.name || 'Silvers Collection'}
             </Text>
             <Text className="text-silver-100 text-sm mt-1">
-              Premium Silver Jewelry & Accessories
+              Handcrafted Silver Jewelry & Accessories
             </Text>
           </View>
 
@@ -58,7 +58,7 @@ export default function HeroSection({
         <View className="bg-white/95 rounded-2xl px-4 py-3 flex-row items-center shadow-sm">
           <Feather name="search" size={18} color="#378388" />
           <TextInput
-            placeholder="Search jewelry, accessories..."
+            placeholder="Search handcrafted jewelry & accessories..."
             value={searchQuery}
             onChangeText={onSearchChange}
             className="flex-1 text-base text-gray-900 ml-3"

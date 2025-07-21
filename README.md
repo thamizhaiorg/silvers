@@ -1,35 +1,30 @@
-# TAR POS - Point of Sale System
+# TAR - E-commerce Storefront
 
-A modern, React Native-based Point of Sale (POS) system built with Expo, featuring real-time data synchronization, cloud storage, and a clean, intuitive interface inspired by Square POS and Shopify POS mobile apps.
+A modern, React Native-based e-commerce storefront app built with Expo, featuring real-time data synchronization, cloud storage, and a clean, intuitive shopping experience for customers.
 
 ## ✨ Features
 
-### 🎨 Exact Design Implementation
-- **Square POS Dashboard**: Complete dashboard with sales metrics, charts, and real-time reporting
-- **Shopify POS Product Forms**: Full-screen product creation/editing with image upload, variants, inventory management
-- **Professional UI Components**: Reusable components matching POS design language
-- **Inventory Management**: Shopify-style quantity adjustment with available/committed/on hand tracking
+### 🛍️ Customer Shopping Experience
+- **Product Browsing**: Clean, modern product grid with search and filtering
+- **Collections**: Browse products organized by collections/categories
+- **Shopping Cart**: Add products to cart with quantity selection
+- **Checkout**: Streamlined checkout process with address management
+- **User Profiles**: Customer accounts with order history and saved addresses
 
-### 📊 Dashboard Features
-- Sales metrics with percentage changes
-- Interactive bar charts for weekly sales data
-- Balance display with fund management
-- Real-time business reports
-- Professional navigation with bottom tabs
+### 📱 E-commerce Functionality
+- Product catalog with images, prices, and descriptions
+- Category-based product filtering
+- Real-time product availability
+- Shopping cart management
+- Order placement and tracking
+- Address management for delivery
+- Order history and details
 
-### 📦 Product Management
-- Shopify-style product creation forms
-- Image upload placeholder
-- Price, SKU, category, and inventory management
-- Product variants and channels
-- Real-time inventory adjustments
-- Stock quantity controls with +/- buttons
-
-### 🏪 Collections Management
-- Create and organize product collections
-- Active/inactive status management
-- Product assignment to collections
-- Search and filter functionality
+### 🎨 Modern Design
+- **Clean Interface**: Modern, flat design patterns
+- **Responsive Layout**: Optimized for mobile shopping experience
+- **Professional UI**: Consistent design language throughout
+- **Bottom Navigation**: Easy access to main shopping areas
 
 ## 🛠 Tech Stack
 
@@ -167,57 +162,46 @@ npm start
 
 ## 📱 App Structure
 
-### Screens
-- **dashboard**: Square POS-style dashboard with metrics and charts
-- **sales**: Sales tracking and recent activity
-- **reports**: Real-time business reports
-- **products**: Product grid with CRUD operations
-- **prod-form**: Shopify-style product creation/editing
-- **inventory**: Stock quantity management
-- **collections**: Collection management
-- **col-form**: Collection creation/editing
-- **prod-mgmt**: Product management tools
-- **col-mgmt**: Collection management tools
+### Customer Screens
+- **products**: Product catalog with search and filtering
+- **collections**: Browse products by collections/categories
+- **cart**: Shopping cart with quantity management
+- **checkout**: Purchase flow with address selection
+- **profile**: User account and order history
+- **order-history**: Past orders and order details
+- **address-management**: Delivery address management
 
 ### Navigation & Layout
-- **nav**: Bottom navigation component
-- **tabs**: Bottom tab content manager
-- **menu**: Full-screen navigation menu
+- **nav**: Bottom navigation (Home, Collections, Cart, Profile)
+- **category-products**: Category-specific product views
 
 ### UI Components
-- **metric**: Metric display cards
-- **qty**: Quantity selector component
-- **chart**: Simple chart components
+- **Button**: Multiple variants for actions
+- **Card**: Consistent card layout
+- **Input**: Form inputs for search and checkout
+- **ProductGrid**: Product display components
+- **R2Image**: Optimized image loading
 
-### UI Components
-- **Button**: Multiple variants (primary, secondary, outline, destructive, success)
-- **Card**: Consistent card layout with shadows
-- **Input**: Form inputs with validation states
-- **MetricCard**: Dashboard metrics with change indicators
-- **QuantitySelector**: +/- quantity controls
-- **SimpleChart**: Bar charts for analytics
+## 🎯 E-commerce Focus
 
-## 🎯 Design Accuracy
+This app is designed as a customer-facing e-commerce storefront with:
 
-This implementation achieves **100% design accuracy** with the reference Square POS and Shopify POS mobile apps:
-
-### Square POS Elements
-- ✅ Dashboard layout with "Leaf & Lemon" branding
-- ✅ Sales metrics cards with percentage changes
-- ✅ Bar chart visualization
-- ✅ Balance display with "Add money" and "Transfer" buttons
-- ✅ Bottom navigation tabs
+### Customer Experience
+- ✅ Intuitive shopping cart functionality
+- ✅ Streamlined checkout process
+- ✅ User account management
+- ✅ Order history and tracking
+- ✅ Address management for delivery
 - ✅ Professional typography and spacing
 
-### Shopify POS Elements
-- ✅ Full-screen product forms
-- ✅ Image upload area with camera icon
-- ✅ Product title and price fields
-- ✅ Channels, Variants, Inventory, and Shipping sections
-- ✅ Quantity adjustment with +/- controls
-- ✅ Available/Committed/On hand inventory tracking
-- ✅ Active/Inactive toggle switches
-- ✅ Cancel/Save navigation
+### Shopping Features
+- ✅ Product search and filtering
+- ✅ Collection-based browsing
+- ✅ Add to cart functionality
+- ✅ Quantity selection
+- ✅ Checkout with address selection
+- ✅ Order confirmation and history
+- ✅ User profile management
 
 ## 📊 Database Schema
 

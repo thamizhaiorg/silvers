@@ -9,45 +9,21 @@ const cardWidth = (screenWidth - 48) / 2; // 48 = padding (24) * 2
 
 interface ProductCardProps {
   product: any;
-  isSelected: boolean;
-  isMultiSelectMode: boolean;
   onPress: () => void;
-  onLongPress: () => void;
 }
 
 function ProductCard({
   product,
-  isSelected,
-  isMultiSelectMode,
-  onPress,
-  onLongPress
+  onPress
 }: ProductCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      onLongPress={onLongPress}
-      className={`rounded-lg overflow-hidden mb-4 ${
-        isSelected ? 'bg-silver-50 border-2 border-silver-500' : 'bg-white'
-      }`}
+      className="bg-white rounded-lg overflow-hidden mb-4"
       style={{
         width: cardWidth,
-        opacity: isMultiSelectMode && !isSelected ? 0.6 : 1,
       }}
     >
-      {/* Multi-select indicator */}
-      {isMultiSelectMode && (
-        <View className="absolute top-2 right-2 z-10">
-          <View className={`w-6 h-6 rounded-full items-center justify-center ${
-            isSelected ? 'bg-silver-500' : 'bg-white/90'
-          }`}>
-            {isSelected ? (
-              <MaterialCommunityIcons name="check" size={14} color="white" />
-            ) : (
-              <View className="w-3 h-3 rounded-full border-2 border-gray-300" />
-            )}
-          </View>
-        </View>
-      )}
 
       {/* Product Image */}
       <View className="bg-gray-50" style={{ height: cardWidth }}>
@@ -80,18 +56,12 @@ function ProductCard({
 
 interface ProductGridProps {
   products: any[];
-  selectedProducts: Set<string>;
-  isMultiSelectMode: boolean;
   onProductPress: (product: any) => void;
-  onProductLongPress: (product: any) => void;
 }
 
 export default function ProductGrid({
   products,
-  selectedProducts,
-  isMultiSelectMode,
-  onProductPress,
-  onProductLongPress
+  onProductPress
 }: ProductGridProps) {
   if (products.length === 0) {
     return (
@@ -118,10 +88,7 @@ export default function ProductGrid({
           <ProductCard
             key={product.id}
             product={product}
-            isSelected={selectedProducts.has(product.id)}
-            isMultiSelectMode={isMultiSelectMode}
             onPress={() => onProductPress(product)}
-            onLongPress={() => onProductLongPress(product)}
           />
         ))}
       </View>

@@ -14,3 +14,4 @@ import {
 import {
   checkStoreIntegrity,
   autoFixIntegrity
+} from './data-integrity';

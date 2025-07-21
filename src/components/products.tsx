@@ -3,18 +3,17 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, Modal, Animat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
-import ProductDetails from './product-details';
+
 import { useStore } from '../lib/store-context';
 import { log, trackError, PerformanceMonitor } from '../lib/logger';
 import { LoadingError, EmptyState } from './ui/error-boundary';
 import HeroSection from './ui/hero-section';
 import ProductGrid, { ProductGridHeader, EmptyProductGrid } from './ui/product-grid';
-import { PromoSlider, CategorySlider, FlashSaleSlider, BannerCard } from './ui/promotional-sliders';
+import { PromoSlider, CategorySlider, FlashSaleSlider } from './ui/promotional-sliders';
 
 import R2Image from './ui/r2-image';
 
 interface ProductsScreenProps {
-  isGridView?: boolean;
   onClose?: () => void;
   onNavigateToCart?: () => void;
   onNavigateToCategory?: (categoryId: string, categoryName?: string) => void;
@@ -38,17 +37,12 @@ const getCategoryIcon = (categoryName: string | undefined | null): string => {
   return 'diamond-stone'; // default icon
 };
 
-export default function ProductsScreen({ isGridView = false, onClose, onNavigateToCart, onNavigateToCategory }: ProductsScreenProps) {
+export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToCategory }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
   const { currentStore } = useStore();
-  const [showDetails, setShowDetails] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('All');
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
-  const [showBottomDrawer, setShowBottomDrawer] = useState(false);
-  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
   // Removed custom BackHandler logic to allow default navigation behavior
 
@@ -128,92 +122,12 @@ export default function ProductsScreen({ isGridView = false, onClose, onNavigate
 
 
 
-  const handleViewDetails = useCallback((product: any) => {
-    setEditingProduct(product);
-    setShowDetails(true);
+  const handleProductPress = useCallback((product: any) => {
+    // Navigate to product details view for customers
+    console.log('View product:', product.title);
   }, []);
 
 
-
-
-
-  const handleLongPress = (product: any) => {
-    if (!isMultiSelectMode) {
-      setIsMultiSelectMode(true);
-      setSelectedProducts(new Set([product.id]));
-      setShowBottomDrawer(true);
-    }
-  };
-
-  const handleProductSelect = useCallback((product: any) => {
-    if (isMultiSelectMode) {
-      const newSelected = new Set(selectedProducts);
-      if (newSelected.has(product.id)) {
-        newSelected.delete(product.id);
-      } else {
-        newSelected.add(product.id);
-      }
-      setSelectedProducts(newSelected);
-
-      if (newSelected.size === 0) {
-        setIsMultiSelectMode(false);
-        setShowBottomDrawer(false);
-      }
-    } else {
-      handleViewDetails(product);
-    }
-  }, [isMultiSelectMode, selectedProducts, handleViewDetails]);
-
-  const handleDeleteSelected = () => {
-    Alert.alert(
-      'Delete Products',
-      `Delete ${selectedProducts.size} selected product(s)?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const deletePromises = Array.from(selectedProducts).map(id =>
-                db.transact(db.tx.products[id].delete())
-              );
-              await Promise.all(deletePromises);
-              setSelectedProducts(new Set());
-              setIsMultiSelectMode(false);
-              setShowBottomDrawer(false);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete products');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleCancelMultiSelect = () => {
-    setSelectedProducts(new Set());
-    setIsMultiSelectMode(false);
-    setShowBottomDrawer(false);
-  };
-
-
-
-  const handleDelete = (product: any) => {
-    const productName = product.title || 'this product';
-    Alert.alert(
-      'Confirm Delete',
-      `Delete "${productName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => db.transact(db.tx.products[product.id].delete()),
-        },
-      ]
-    );
-  };
 
   if (isLoading) {
     return (
@@ -231,19 +145,7 @@ export default function ProductsScreen({ isGridView = false, onClose, onNavigate
     );
   }
 
-  // Show product details
-  if (showDetails && editingProduct) {
-    return (
-      <ProductDetails
-        product={editingProduct}
-        onClose={() => {
-          setShowDetails(false);
-          setEditingProduct(null);
-        }}
-        onNavigateToCart={onNavigateToCart}
-      />
-    );
-  }
+
 
   // Filter Modal - Full screen with no spacing above
   if (showFilterModal) {
@@ -408,17 +310,7 @@ export default function ProductsScreen({ isGridView = false, onClose, onNavigate
           }}
         />
 
-        {/* Featured Banner */}
-        <BannerCard
-          title="Handcrafted Excellence"
-          subtitle="Each piece is carefully crafted by skilled artisans"
-          buttonText="Learn More"
-          backgroundColor="bg-[#378388]"
-          onPress={() => {
-            console.log('Banner pressed');
-            // Handle banner navigation
-          }}
-        />
+
 
         {/* Category Filter Tabs */}
         <View className="bg-white py-4 mb-2">
@@ -472,10 +364,7 @@ export default function ProductsScreen({ isGridView = false, onClose, onNavigate
           ) : (
             <ProductGrid
               products={filteredProducts}
-              selectedProducts={selectedProducts}
-              isMultiSelectMode={isMultiSelectMode}
-              onProductPress={handleProductSelect}
-              onProductLongPress={handleLongPress}
+              onProductPress={handleProductPress}
             />
           )}
         </View>
@@ -484,43 +373,7 @@ export default function ProductsScreen({ isGridView = false, onClose, onNavigate
         <View className="h-24" />
       </ScrollView>
 
-      {/* Bottom Drawer for Multi-select Actions - Fixed overlay issue */}
-      {showBottomDrawer && (
-        <View className="absolute bottom-0 left-0 right-0 bg-white px-4 py-4"
-        >
-          {/* Header */}
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-base font-medium text-gray-900">
-              {selectedProducts.size} selected
-            </Text>
-            <TouchableOpacity onPress={handleCancelMultiSelect}>
-              <Feather name="x" size={20} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
 
-          {/* Action Buttons */}
-          <View className="gap-3">
-            <TouchableOpacity
-              onPress={handleDeleteSelected}
-              className="flex-row items-center justify-center bg-red-50 py-3"
-            >
-              <Feather name="trash-2" size={18} color="#DC2626" />
-              <Text className="text-red-600 font-medium ml-2 text-base">
-                Delete Selected
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleCancelMultiSelect}
-              className="flex-row items-center justify-center bg-gray-100 py-3"
-            >
-              <Text className="text-gray-700 font-medium text-base">
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
 
     </View>

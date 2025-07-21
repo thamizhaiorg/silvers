@@ -458,10 +458,12 @@ export async function checkStoreIntegrity(storeId: string): Promise<{
   results.overall.totalErrors = entities.reduce((sum, entity) => sum + entity.summary.errors, 0);
   results.overall.totalWarnings = entities.reduce((sum, entity) => sum + entity.summary.warnings, 0);
   results.overall.averageHealthScore = entities.reduce((sum, entity) => sum + entity.summary.healthScore, 0) / entities.length;
-- Total errors found: ${results.overall.totalErrors}
-- Total warnings found: ${results.overall.totalWarnings}
-- Average health score: ${results.overall.averageHealthScore.toFixed(1)}/100
-  `);
+
+  log.info('Data Integrity Check Complete', 'DataIntegrity', {
+    totalErrors: results.overall.totalErrors,
+    totalWarnings: results.overall.totalWarnings,
+    averageHealthScore: results.overall.averageHealthScore
+  });
   
   return results;
 }

@@ -7,16 +7,13 @@ import { db, getCurrentTimestamp } from '../lib/instant';
 import R2Image from './ui/r2-image';
 
 interface CollectionsScreenProps {
-  isGridView?: boolean;
-  onOpenForm?: (collection?: any) => void;
   onClose?: () => void;
 }
 
-export default function CollectionsScreen({ isGridView = false, onOpenForm, onClose }: CollectionsScreenProps) {
+export default function CollectionsScreen({ onClose }: CollectionsScreenProps) {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const [showActionDrawer, setShowActionDrawer] = useState(false);
-  const [selectedCollection, setSelectedCollection] = useState<any>(null);
+
 
   // Handle Android back button to call onClose
   useEffect(() => {
@@ -51,44 +48,9 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
     collection.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAdd = () => {
-    onOpenForm?.();
-  };
-
-  const handleEdit = (collection: any) => {
-    onOpenForm?.(collection);
-    setShowActionDrawer(false);
-  };
-
-  const handleThreeDotsPress = (collection: any) => {
-    setSelectedCollection(collection);
-    setShowActionDrawer(true);
-  };
-
-  const handleDelete = (collection: any) => {
-    if (collection.products && collection.products.length > 0) {
-      Alert.alert(
-        'Cannot Delete',
-        `This collection has ${collection.products.length} products. Remove them first.`
-      );
-      return;
-    }
-
-    Alert.alert(
-      'Confirm Delete',
-      `Delete "${collection.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            db.transact(db.tx.collections[collection.id].delete());
-            setShowActionDrawer(false);
-          },
-        },
-      ]
-    );
+  const handleCollectionPress = (collection: any) => {
+    // Navigate to collection products view
+    console.log('View collection:', collection.name);
   };
 
   const toggleStatus = (collection: any) => {
@@ -147,15 +109,6 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-        <TouchableOpacity
-          onPress={handleAdd}
-          style={{
-            padding: 8,
-            marginLeft: 8,
-          }}
-        >
-          <Feather name="plus" size={20} color="#6B7280" />
-        </TouchableOpacity>
       </View>
 
       {/* Collections List - Minimal clean design */}
@@ -191,7 +144,7 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
                 textAlign: 'center',
                 fontSize: 14
               }}>
-                {searchQuery ? 'Try adjusting your search' : 'Create your first collection to organize products'}
+                {searchQuery ? 'Try adjusting your search' : 'No collections available'}
               </Text>
             </View>
           </View>
@@ -203,7 +156,7 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
             contentContainerStyle={{ paddingBottom: 16 }}
             renderItem={({ item: collection }) => (
               <TouchableOpacity
-                onPress={() => handleEdit(collection)}
+                onPress={() => handleCollectionPress(collection)}
                 style={{
                   backgroundColor: '#fff',
                   paddingHorizontal: 16,
@@ -270,19 +223,7 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
                     </View>
                   </View>
 
-                  {/* Three dots menu */}
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleThreeDotsPress(collection);
-                    }}
-                    style={{
-                      padding: 8,
-                      marginLeft: 8,
-                    }}
-                  >
-                    <Feather name="more-horizontal" size={20} color="#6B7280" />
-                  </TouchableOpacity>
+
                 </View>
               </TouchableOpacity>
             )}
@@ -290,74 +231,7 @@ export default function CollectionsScreen({ isGridView = false, onOpenForm, onCl
         )}
       </View>
 
-      {/* Bottom Action Drawer */}
-      <Modal
-        visible={showActionDrawer}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowActionDrawer(false)}
-      >
-        <TouchableOpacity
-          style={{
-            flex: 1,
-            backgroundColor: 'transparent',
-            justifyContent: 'flex-end',
-          }}
-          activeOpacity={1}
-          onPress={() => setShowActionDrawer(false)}
-        >
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#fff',
-              width: '100%',
-              paddingBottom: insets.bottom,
-              borderTopWidth: 1,
-              borderTopColor: '#E5E7EB',
-            }}
-            activeOpacity={1}
-          >
-            {/* Action Options */}
-            <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
-              {/* Disable/Enable Option */}
-              <TouchableOpacity
-                onPress={() => selectedCollection && toggleStatus(selectedCollection)}
-                style={{
-                  paddingVertical: 16,
-                  borderBottomWidth: 1,
-                  borderBottomColor: '#E5E7EB',
-                }}
-              >
-                <Text style={{ fontSize: 16, color: '#111827' }}>
-                  {selectedCollection?.isActive ? 'Disable' : 'Enable'}
-                </Text>
-              </TouchableOpacity>
 
-              {/* Edit Option */}
-              <TouchableOpacity
-                onPress={() => selectedCollection && handleEdit(selectedCollection)}
-                style={{
-                  paddingVertical: 16,
-                  borderBottomWidth: 1,
-                  borderBottomColor: '#E5E7EB',
-                }}
-              >
-                <Text style={{ fontSize: 16, color: '#3B82F6' }}>Edit</Text>
-              </TouchableOpacity>
-
-              {/* Delete Option */}
-              <TouchableOpacity
-                onPress={() => selectedCollection && handleDelete(selectedCollection)}
-                style={{
-                  paddingVertical: 16,
-                  marginBottom: 16,
-                }}
-              >
-                <Text style={{ fontSize: 16, color: '#EF4444' }}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 }

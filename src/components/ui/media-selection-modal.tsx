@@ -5,8 +5,8 @@ import { MaterialIcons, Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../../lib/instant';
 import { useStore } from '../../lib/store-context';
-import { useFiles } from '../../hooks/useFiles';
-import { fileManager } from '../../lib/file-manager';
+// import { useFiles } from '../../hooks/useFiles'; // Removed for e-commerce storefront
+// import { fileManager } from '../../lib/file-manager'; // Removed for e-commerce storefront
 import { log } from '../../lib/logger';
 import R2Image from './r2-image';
 import LoadingSpinner from './loading-spinner';
@@ -52,8 +52,10 @@ export default function MediaSelectionModal({
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
   const [uploading, setUploading] = useState(false);
 
-  // Use the files hook to get images only
-  const { files, uploadFile } = useFiles({ type: 'images' });
+  // Use the files hook to get images only - Disabled for e-commerce storefront
+  // const { files, uploadFile } = useFiles({ type: 'images' });
+  const files: any[] = [];
+  const uploadFile = async () => {};
 
   // Removed R2 logs
 

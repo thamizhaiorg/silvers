@@ -6,7 +6,7 @@ import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { r2Service, MediaFile, UploadResult } from '../../lib/r2-service';
 import { db, getCurrentTimestamp } from '../../lib/instant';
 import { useStore } from '../../lib/store-context';
-import { fileManager } from '../../lib/file-manager';
+// import { fileManager } from '../../lib/file-manager'; // Removed for e-commerce storefront
 import { log } from '../../lib/logger';
 import { id } from '@instantdb/react-native';
 import R2Image from './r2-image';
