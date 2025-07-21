@@ -1,22 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { formatCurrency } from '../lib/instant';
+import { useCart } from '../lib/cart-context';
 import R2Image from './ui/r2-image';
-
-interface CartItem {
-  id: string;
-  productId: string;
-  itemId?: string;
-  title: string;
-  variantTitle?: string;
-  price: number;
-  quantity: number;
-  total: number;
-  image?: string;
-  sku?: string;
-}
 
 interface CartScreenProps {
   onClose?: () => void;
@@ -24,56 +12,38 @@ interface CartScreenProps {
 
 export default function CartScreen({ onClose }: CartScreenProps) {
   const insets = useSafeAreaInsets();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { items: cartItems, totals, updateQuantity, removeItem, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock cart data - in a real app, this would come from a cart service/context
-  useEffect(() => {
-    // Load cart items from storage or context
-    // For now, using empty cart as placeholder
-    setCartItems([]);
-  }, []);
-
-  const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(itemId);
-      return;
-    }
-
-    setCartItems(prev => prev.map(item => 
-      item.id === itemId 
-        ? { ...item, quantity: newQuantity, total: item.price * newQuantity }
-        : item
-    ));
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    updateQuantity(itemId, newQuantity);
   };
 
-  const removeItem = (itemId: string) => {
+  const handleRemoveItem = (itemId: string) => {
     Alert.alert(
       'Remove Item',
       'Are you sure you want to remove this item from your cart?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
+        {
+          text: 'Remove',
           style: 'destructive',
-          onPress: () => {
-            setCartItems(prev => prev.filter(item => item.id !== itemId));
-          }
+          onPress: () => removeItem(itemId)
         }
       ]
     );
   };
 
-  const clearCart = () => {
+  const handleClearCart = () => {
     Alert.alert(
       'Clear Cart',
       'Are you sure you want to remove all items from your cart?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
+        {
+          text: 'Clear',
           style: 'destructive',
-          onPress: () => setCartItems([])
+          onPress: () => clearCart()
         }
       ]
     );
@@ -92,25 +62,26 @@ export default function CartScreen({ onClose }: CartScreenProps) {
       Alert.alert(
         'Checkout Complete',
         'Your order has been placed successfully!',
-        [{ text: 'OK', onPress: () => setCartItems([]) }]
+        [{ text: 'OK', onPress: () => clearCart() }]
       );
     }, 2000);
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0);
-  const tax = subtotal * 0.1; // 10% tax
-  const total = subtotal + tax;
-
-  const renderCartItem = (item: CartItem) => (
+  const renderCartItem = (item: any) => (
     <View key={item.id} className="bg-white p-4 mb-3 rounded-lg shadow-sm">
       <View className="flex-row">
         {/* Product Image */}
         <View className="w-16 h-16 bg-gray-100 rounded-lg mr-3">
           {item.image ? (
             <R2Image
-              path={item.image}
-              className="w-full h-full rounded-lg"
+              url={item.image}
+              style={{ width: '100%', height: '100%' }}
               contentFit="cover"
+              fallback={
+                <View className="w-full h-full rounded-lg bg-gray-200 items-center justify-center">
+                  <MaterialCommunityIcons name="image-outline" size={24} color="#9CA3AF" />
+                </View>
+              }
             />
           ) : (
             <View className="w-full h-full rounded-lg bg-gray-200 items-center justify-center">
@@ -139,18 +110,18 @@ export default function CartScreen({ onClose }: CartScreenProps) {
             {/* Quantity Controls */}
             <View className="flex-row items-center">
               <TouchableOpacity
-                onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                 className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
               >
                 <Feather name="minus" size={16} color="#374151" />
               </TouchableOpacity>
-              
+
               <Text className="mx-3 text-base font-medium text-gray-900 min-w-[30px] text-center">
                 {item.quantity}
               </Text>
-              
+
               <TouchableOpacity
-                onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                 className="w-8 h-8 bg-gray-100 rounded-full items-center justify-center"
               >
                 <Feather name="plus" size={16} color="#374151" />
@@ -161,7 +132,7 @@ export default function CartScreen({ onClose }: CartScreenProps) {
 
         {/* Remove Button */}
         <TouchableOpacity
-          onPress={() => removeItem(item.id)}
+          onPress={() => handleRemoveItem(item.id)}
           className="ml-2 w-8 h-8 items-center justify-center"
         >
           <Feather name="trash-2" size={18} color="#EF4444" />
@@ -191,11 +162,16 @@ export default function CartScreen({ onClose }: CartScreenProps) {
       {/* Header */}
       <View className="bg-white px-4 py-4 border-b border-gray-200">
         <View className="flex-row items-center justify-between">
-          <Text className="text-xl font-bold text-gray-900">
+          {onClose && (
+            <TouchableOpacity onPress={onClose} className="mr-3">
+              <Feather name="arrow-left" size={24} color="#3B82F6" />
+            </TouchableOpacity>
+          )}
+          <Text className="text-xl font-bold text-gray-900 flex-1">
             Cart ({cartItems.length})
           </Text>
           {cartItems.length > 0 && (
-            <TouchableOpacity onPress={clearCart}>
+            <TouchableOpacity onPress={handleClearCart}>
               <Text className="text-red-600 font-medium">Clear All</Text>
             </TouchableOpacity>
           )}
@@ -216,15 +192,27 @@ export default function CartScreen({ onClose }: CartScreenProps) {
             <View className="space-y-2 mb-4">
               <View className="flex-row justify-between">
                 <Text className="text-gray-600">Subtotal</Text>
-                <Text className="text-gray-900">{formatCurrency(subtotal)}</Text>
+                <Text className="text-gray-900">{formatCurrency(totals.subtotal)}</Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-gray-600">Tax</Text>
-                <Text className="text-gray-900">{formatCurrency(tax)}</Text>
+                <Text className="text-gray-900">{formatCurrency(totals.tax)}</Text>
               </View>
+              {totals.shipping > 0 && (
+                <View className="flex-row justify-between">
+                  <Text className="text-gray-600">Shipping</Text>
+                  <Text className="text-gray-900">{formatCurrency(totals.shipping)}</Text>
+                </View>
+              )}
+              {totals.discount > 0 && (
+                <View className="flex-row justify-between">
+                  <Text className="text-gray-600">Discount</Text>
+                  <Text className="text-green-600">-{formatCurrency(totals.discount)}</Text>
+                </View>
+              )}
               <View className="flex-row justify-between border-t border-gray-200 pt-2">
                 <Text className="text-lg font-semibold text-gray-900">Total</Text>
-                <Text className="text-lg font-semibold text-gray-900">{formatCurrency(total)}</Text>
+                <Text className="text-lg font-semibold text-gray-900">{formatCurrency(totals.total)}</Text>
               </View>
             </View>
 

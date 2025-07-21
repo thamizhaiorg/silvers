@@ -191,9 +191,14 @@ export default function OrderProductSelect({ onProductsSelect, onClose }: OrderP
             <View className="w-12 h-12 bg-gray-100 rounded-lg mr-3 overflow-hidden">
               {product.image ? (
                 <R2Image
-                  path={product.image}
-                  className="w-full h-full"
-                  resizeMode="cover"
+                  url={product.image}
+                  style={{ width: '100%', height: '100%' }}
+                  contentFit="cover"
+                  fallback={
+                    <View className="w-full h-full items-center justify-center">
+                      <Feather name="image" size={20} color="#9CA3AF" />
+                    </View>
+                  }
                 />
               ) : (
                 <View className="w-full h-full items-center justify-center">

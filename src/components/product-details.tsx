@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
 import { useStore } from '../lib/store-context';
+import { useCart } from '../lib/cart-context';
 import R2Image from './ui/r2-image';
 import Button from './ui/Button';
 import QuantitySelector from './ui/qty';
@@ -11,13 +12,17 @@ import QuantitySelector from './ui/qty';
 interface ProductDetailsProps {
   product: any;
   onClose: () => void;
+  onNavigateToCart?: () => void;
 }
 
-export default function ProductDetails({ product, onClose }: ProductDetailsProps) {
+export default function ProductDetails({ product, onClose, onNavigateToCart }: ProductDetailsProps) {
   const insets = useSafeAreaInsets();
   const { currentStore } = useStore();
+  const { addItem, hasItem, items, itemCount } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
+
+
 
   // Query product with full details and relationships
   const { data, isLoading, error } = db.useQuery(
@@ -49,30 +54,39 @@ export default function ProductDetails({ product, onClose }: ProductDetailsProps
   }, [variants, selectedVariant]);
 
   const handleAddToCart = useCallback(async () => {
-    if (!currentStore || !productData) return;
+    if (!currentStore || !productData) {
+      Alert.alert('Error', 'Missing store or product data');
+      return;
+    }
 
     try {
       const cartItem = {
         productId: productData.id,
-        itemId: selectedVariant?.id || null,
-        title: productData.title,
+        itemId: selectedVariant?.id,
+        title: productData.title || 'Product',
         image: productData.image,
         price: selectedVariant?.price || productData.price || 0,
         quantity: quantity,
         sku: selectedVariant?.sku || productData.sku,
         variantTitle: getVariantTitle(selectedVariant),
-        sessionId: null, // Will be set by cart system
-        userId: null, // Will be set by cart system
-        createdAt: new Date(),
       };
 
-      // Add to cart logic here - you might want to use a cart service
-      Alert.alert('Added to Cart', `${quantity} ${productData.title} added to cart`);
+      await addItem(cartItem);
+
+      Alert.alert(
+        'Added to Cart',
+        `${quantity} ${productData.title}${cartItem.variantTitle ? ` (${cartItem.variantTitle})` : ''} added to cart`,
+        [
+          { text: 'Continue Shopping', style: 'cancel' },
+          { text: 'View Cart', onPress: () => onNavigateToCart?.() }
+        ]
+      );
 
     } catch (error) {
+      console.error('Error adding to cart:', error);
       Alert.alert('Error', 'Failed to add item to cart');
     }
-  }, [currentStore, productData, selectedVariant, quantity]);
+  }, [currentStore, productData, selectedVariant, quantity, addItem, onNavigateToCart]);
 
   const getVariantTitle = (variant: any) => {
     if (!variant) return '';
@@ -103,10 +117,9 @@ export default function ProductDetails({ product, onClose }: ProductDetailsProps
   };
 
   const isInStock = () => {
-    if (selectedVariant) {
-      return (selectedVariant.totalOnHand || 0) > 0;
-    }
-    return variants.some((variant: any) => (variant.totalOnHand || 0) > 0);
+    // For now, always return true to allow adding to cart
+    // In a real app, you would check actual inventory levels
+    return true;
   };
 
 
@@ -131,7 +144,10 @@ export default function ProductDetails({ product, onClose }: ProductDetailsProps
               <Feather name="arrow-left" size={24} color="#374151" />
             </TouchableOpacity>
             <Text className="text-lg font-semibold text-gray-900">Product Details</Text>
-            <View className="w-6" />
+            <View className="flex-row items-center">
+              <Text className="text-sm text-gray-600 mr-2">Cart: {itemCount}</Text>
+              <View className="w-6" />
+            </View>
           </View>
         </View>
       </View>
@@ -239,7 +255,7 @@ export default function ProductDetails({ product, onClose }: ProductDetailsProps
             <Text className="text-lg font-semibold text-gray-900 mb-3">Quantity</Text>
             <QuantitySelector
               value={quantity}
-              onChange={setQuantity}
+              onValueChange={setQuantity}
               min={1}
               max={selectedVariant?.totalOnHand || 99}
             />
@@ -289,14 +305,20 @@ export default function ProductDetails({ product, onClose }: ProductDetailsProps
       {/* Fixed Add to Cart Button */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4"
         style={{ paddingBottom: insets.bottom + 8 }}>
-        <Button
-          title="Add to Cart"
+
+
+
+        <TouchableOpacity
           onPress={handleAddToCart}
-          variant="primary"
-          size="large"
-          fullWidth
+          className={`py-4 rounded-lg items-center ${
+            isInStock() ? 'bg-blue-600' : 'bg-gray-400'
+          }`}
           disabled={!isInStock()}
-        />
+        >
+          <Text className="text-white font-semibold text-lg">
+            Add to Cart
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

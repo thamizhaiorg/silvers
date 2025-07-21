@@ -13,6 +13,7 @@ import R2Image from './ui/r2-image';
 interface ProductsScreenProps {
   isGridView?: boolean;
   onClose?: () => void;
+  onNavigateToCart?: () => void;
 }
 
 type FilterCategory = 'All' | string; // 'All' or category ID
@@ -89,7 +90,7 @@ const ProductItem = React.memo(({
   );
 });
 
-export default function ProductsScreen({ isGridView = false, onClose }: ProductsScreenProps) {
+export default function ProductsScreen({ isGridView = false, onClose, onNavigateToCart }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
   const { currentStore } = useStore();
   const [showDetails, setShowDetails] = useState(false);
@@ -286,6 +287,7 @@ export default function ProductsScreen({ isGridView = false, onClose }: Products
           setShowDetails(false);
           setEditingProduct(null);
         }}
+        onNavigateToCart={onNavigateToCart}
       />
     );
   }

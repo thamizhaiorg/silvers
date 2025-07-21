@@ -6,6 +6,7 @@ import ErrorBoundary from "../components/ui/error-boundary";
 import { AuthProvider } from "../lib/auth-context";
 import { StoreProvider } from "../lib/store-context";
 import { LocationProvider } from "../lib/location-context";
+import { CartProvider } from "../lib/cart-context";
 
 export default function Layout() {
   return (
@@ -14,9 +15,11 @@ export default function Layout() {
         <AuthProvider>
           <StoreProvider>
             <LocationProvider>
-              <ErrorBoundary>
-                <Slot />
-              </ErrorBoundary>
+              <CartProvider>
+                <ErrorBoundary>
+                  <Slot />
+                </ErrorBoundary>
+              </CartProvider>
             </LocationProvider>
           </StoreProvider>
         </AuthProvider>

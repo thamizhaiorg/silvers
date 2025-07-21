@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Text, View, TouchableOpacity, BackHandler, Alert } from "react-native";
 import { useAuth } from "../lib/auth-context";
+import { useCart } from "../lib/cart-context";
 import AuthScreen from "../screens/auth";
 import ProductsScreen from "../components/products";
 import ProductFormScreen from "../components/prod-form";
@@ -57,6 +58,7 @@ interface NavigationState {
 
 export default function Page() {
   const { user, isLoading } = useAuth();
+  const { itemCount } = useCart();
   // Always start with products screen as the home screen
   const [currentScreen, setCurrentScreen] = useState<Screen>('products');
   const [isGridView, setIsGridView] = useState(false); // false = list view (default), true = grid view
@@ -354,15 +356,8 @@ export default function Page() {
       case 'products':
         return <ProductsScreen
           isGridView={isGridView}
-          onProductFormOpen={(product) => {
-            setProductFormProduct(product);
-            setIsProductFormOpen(true);
-          }}
-          onProductFormClose={() => {
-            setProductFormProduct(null);
-            setIsProductFormOpen(false);
-          }}
           onClose={() => {}} // No-op since products is now the home screen
+          onNavigateToCart={() => handleNavigate('cart')}
         />;
       case 'collections':
         return <CollectionsScreen
@@ -422,15 +417,8 @@ export default function Page() {
       default:
         return <ProductsScreen
           isGridView={isGridView}
-          onProductFormOpen={(product) => {
-            setProductFormProduct(product);
-            setIsProductFormOpen(true);
-          }}
-          onProductFormClose={() => {
-            setProductFormProduct(null);
-            setIsProductFormOpen(false);
-          }}
           onClose={() => {}} // No-op since products is now the home screen
+          onNavigateToCart={() => handleNavigate('cart')}
         />;
     }
   };
@@ -462,7 +450,7 @@ export default function Page() {
             <BottomNavigation
               activeTab={activeBottomTab}
               onTabPress={handleBottomTabPress}
-              cartItemCount={0} // TODO: Connect to actual cart count
+              cartItemCount={itemCount}
             />
           )}
         </View>
