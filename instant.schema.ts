@@ -47,7 +47,6 @@ const _schema = i.schema({
       updatedAt: i.date(),
     }),
     customers: i.entity({
-      storeId: i.string().indexed(), // Required field for store association
       addresses: i.json().optional(),
       createdAt: i.date().indexed(),
       defaultAddress: i.json().optional(),
@@ -444,18 +443,7 @@ const _schema = i.schema({
       path: i.string().optional(),
       // storeId removed - single store app
     }),
-    store: i.entity({
-      address: i.string().optional(),
-      createdAt: i.date(),
-      description: i.string().optional(),
-      email: i.string().optional(),
-      logo: i.string().optional(),
-      name: i.string().unique().indexed(),
-      peopleaId: i.string().indexed().optional(),
-      phone: i.string().optional(),
-      updatedAt: i.date().optional(),
-      website: i.string().optional(),
-    }),
+
     // storefronts entity removed - storefront related
 
     tags: i.entity({
@@ -648,18 +636,7 @@ const _schema = i.schema({
         label: "peoplea",
       },
     },
-    peopleaStores: {
-      forward: {
-        on: "peoplea",
-        has: "many",
-        label: "stores",
-      },
-      reverse: {
-        on: "store",
-        has: "one",
-        label: "peoplea",
-      },
-    },
+
     productsCollection: {
       forward: {
         on: "products",
@@ -684,42 +661,8 @@ const _schema = i.schema({
         label: "product",
       },
     },
-    store$users: {
-      forward: {
-        on: "store",
-        has: "many",
-        label: "$users",
-      },
-      reverse: {
-        on: "$users",
-        has: "many",
-        label: "store",
-      },
-    },
-    storeFiles: {
-      forward: {
-        on: "store",
-        has: "many",
-        label: "files",
-      },
-      reverse: {
-        on: "files",
-        has: "one",
-        label: "store",
-      },
-    },
-    storeCustomers: {
-      forward: {
-        on: "store",
-        has: "many",
-        label: "customers",
-      },
-      reverse: {
-        on: "customers",
-        has: "one",
-        label: "store",
-      },
-    },
+
+
     // storeStorefront link removed - storefronts entity removed
     // storefront-related links removed - entities no longer exist
     // testimonialsProduct link removed - testimonials entity removed

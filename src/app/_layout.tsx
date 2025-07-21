@@ -4,8 +4,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ErrorBoundary from "../components/ui/error-boundary";
 import { AuthProvider } from "../lib/auth-context";
-import { StoreProvider } from "../lib/store-context";
-
 import { CartProvider } from "../lib/cart-context";
 
 export default function Layout() {
@@ -13,13 +11,11 @@ export default function Layout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <StoreProvider>
-            <CartProvider>
-              <ErrorBoundary>
-                <Slot />
-              </ErrorBoundary>
-            </CartProvider>
-          </StoreProvider>
+          <CartProvider>
+            <ErrorBoundary>
+              <Slot />
+            </ErrorBoundary>
+          </CartProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
 
-import { useStore } from '../lib/store-context';
+
 import { log, trackError, PerformanceMonitor } from '../lib/logger';
 import { LoadingError, EmptyState } from './ui/error-boundary';
 import HeroSection from './ui/hero-section';
@@ -39,37 +39,31 @@ const getCategoryIcon = (categoryName: string | undefined | null): string => {
 
 export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToCategory }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
-  const { currentStore } = useStore();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('All');
 
   // Removed custom BackHandler logic to allow default navigation behavior
 
-  // Query products with their items and categories filtered by current store
-  const { isLoading, error, data } = db.useQuery(
-    currentStore?.id ? {
-      products: {
-        $: {
-          where: {
-            storeId: currentStore.id
-          },
-          order: {
-            createdAt: 'desc' // Use consistent field naming
-          }
-        },
-        item: {}, // Keep item relationship as it's working
-        category: {} // Include category relationship
+  // Query products with their items and categories
+  const { isLoading, error, data } = db.useQuery({
+    products: {
+      $: {
+        order: {
+          createdAt: 'desc' // Use consistent field naming
+        }
       },
-      categories: {
-        $: {
-          order: {
-            name: 'asc'
-          }
+      item: {}, // Keep item relationship as it's working
+      category: {} // Include category relationship
+    },
+    categories: {
+      $: {
+        order: {
+          name: 'asc'
         }
       }
-    } : null // Don't query if no store selected
-  );
+    }
+  });
 
   const products = data?.products || [];
   const categories = data?.categories || [];
@@ -208,15 +202,7 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
     );
   }
 
-  if (!currentStore) {
-    return (
-      <EmptyState
-        icon="package"
-        title="No Products"
-        description="Start by adding your first product"
-      />
-    );
-  }
+
 
   return (
     <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>

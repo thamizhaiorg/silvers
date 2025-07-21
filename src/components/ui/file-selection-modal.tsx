@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, Modal, Alert } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { db } from '../../lib/instant';
-import { useStore } from '../../lib/store-context';
+
 // import { useFileSelection } from '../../hooks/useFiles'; // Removed for e-commerce storefront
 import R2Image from './r2-image';
 

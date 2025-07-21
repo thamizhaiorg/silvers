@@ -2,7 +2,7 @@
 import { db } from '../lib/instant';
 import { log, trackError } from '../lib/logger';
 import { User } from '@instantdb/react-native';
-import { useStore } from '../lib/store-context';
+
 
 export interface OrderHistoryItem {
   id: string;
@@ -69,7 +69,6 @@ export class OrderHistoryService {
    */
   async getUserOrderHistory(
     userEmail: string,
-    storeId?: string,
     filters?: OrderHistoryFilters,
     limit?: number,
     offset?: number
@@ -77,7 +76,6 @@ export class OrderHistoryService {
     try {
       log.info('Fetching user order history', 'OrderHistoryService', {
         userEmail,
-        storeId,
         filters,
         limit,
         offset
@@ -87,11 +85,6 @@ export class OrderHistoryService {
       const whereConditions: any = {
         customerEmail: userEmail
       };
-
-      // Add store filter if provided
-      if (storeId) {
-        whereConditions.storeId = storeId;
-      }
 
       // Add status filters
       if (filters?.status && filters.status !== 'all') {
@@ -162,7 +155,7 @@ export class OrderHistoryService {
   /**
    * Get order history summary statistics
    */
-  async getUserOrderSummary(userEmail: string, storeId?: string): Promise<{
+  async getUserOrderSummary(userEmail: string): Promise<{
     success: boolean;
     summary?: OrderHistorySummary;
     error?: string
@@ -171,8 +164,8 @@ export class OrderHistoryService {
       log.info('Fetching user order summary', 'OrderHistoryService', { userEmail });
 
       // Get all orders for the user
-      const result = await this.getUserOrderHistory(userEmail, storeId);
-      
+      const result = await this.getUserOrderHistory(userEmail);
+
       if (!result.success || !result.orders) {
         return { success: false, error: result.error };
       }
@@ -238,8 +231,7 @@ export class OrderHistoryService {
    */
   async getUserOrder(
     userEmail: string,
-    orderId: string,
-    storeId?: string
+    orderId: string
   ): Promise<{ success: boolean; order?: OrderHistoryItem; error?: string }> {
     try {
       log.info('Fetching user order', 'OrderHistoryService', { userEmail, orderId });
@@ -248,10 +240,6 @@ export class OrderHistoryService {
         id: orderId,
         customerEmail: userEmail
       };
-
-      if (storeId) {
-        whereConditions.storeId = storeId;
-      }
 
       const query = await db.queryOnce({
         orders: {
@@ -263,7 +251,7 @@ export class OrderHistoryService {
       });
 
       const orders = query.orders || [];
-      
+
       if (orders.length === 0) {
         return { success: false, error: 'Order not found or access denied' };
       }
@@ -290,13 +278,12 @@ export class OrderHistoryService {
   async searchUserOrders(
     userEmail: string,
     searchQuery: string,
-    storeId?: string,
     limit?: number
   ): Promise<{ success: boolean; orders?: OrderHistoryItem[]; error?: string }> {
     try {
       log.info('Searching user orders', 'OrderHistoryService', { userEmail, searchQuery });
 
-      const result = await this.getUserOrderHistory(userEmail, storeId, {
+      const result = await this.getUserOrderHistory(userEmail, {
         search: searchQuery
       }, limit);
 
@@ -314,11 +301,10 @@ export class OrderHistoryService {
    */
   async getRecentUserOrders(
     userEmail: string,
-    storeId?: string,
     limit: number = 5
   ): Promise<{ success: boolean; orders?: OrderHistoryItem[]; error?: string }> {
     try {
-      return await this.getUserOrderHistory(userEmail, storeId, undefined, limit);
+      return await this.getUserOrderHistory(userEmail, undefined, limit);
     } catch (error: any) {
       log.error('Error fetching recent user orders', 'OrderHistoryService', error);
       return { success: false, error: error.message || 'Failed to fetch recent orders' };

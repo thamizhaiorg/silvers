@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvo
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-import { useStore } from '../lib/store-context';
+
 import { userCustomerService } from '../services/user-customer-service';
 import { Address } from '../types/database';
 
@@ -17,7 +17,6 @@ interface AddressFormProps {
 export default function AddressForm({ onClose, onSave, address, isEditing = false }: AddressFormProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { currentStore } = useStore();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -98,15 +97,15 @@ export default function AddressForm({ onClose, onSave, address, isEditing = fals
       return;
     }
 
-    if (!user?.email || !currentStore?.id) {
-      Alert.alert('Error', 'User or store not found');
+    if (!user?.email) {
+      Alert.alert('Error', 'User not found');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const customer = await userCustomerService.findOrCreateCustomerForUser(user, undefined, currentStore.id);
+      const customer = await userCustomerService.findOrCreateCustomerForUser(user, undefined);
       
       if (!customer.success || !customer.customer) {
         Alert.alert('Error', 'Failed to find customer record');

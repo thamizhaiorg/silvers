@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Modal, Alert } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-import { useStore } from '../lib/store-context';
+
 import { userCustomerService } from '../services/user-customer-service';
 import { Address } from '../types/database';
 
@@ -15,24 +15,23 @@ interface AddressSelectorProps {
   selectedAddress?: Address | null;
 }
 
-export default function AddressSelector({ 
-  visible, 
-  onClose, 
-  onSelectAddress, 
+export default function AddressSelector({
+  visible,
+  onClose,
+  onSelectAddress,
   onAddNewAddress,
-  selectedAddress 
+  selectedAddress
 }: AddressSelectorProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { currentStore } = useStore();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadAddresses = async () => {
-    if (!user?.email || !currentStore?.id) return;
+    if (!user?.email) return;
 
     try {
-      const customer = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
+      const customer = await userCustomerService.findCustomerByEmail(user.email);
       
       if (customer) {
         const customerAddresses = customer.addresses || [];

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, RefreshControl } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-import { useStore } from '../lib/store-context';
+
 import { userCustomerService } from '../services/user-customer-service';
 import { Address } from '../types/database';
 
@@ -13,37 +13,36 @@ interface AddressManagementScreenProps {
   onEditAddress?: (address: Address & { id: string }) => void;
 }
 
-export default function AddressManagementScreen({ 
-  onClose, 
-  onAddAddress, 
-  onEditAddress 
+export default function AddressManagementScreen({
+  onClose,
+  onAddAddress,
+  onEditAddress
 }: AddressManagementScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { currentStore } = useStore();
   const [addresses, setAddresses] = useState<(Address & { id: string })[]>([]);
   const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAddresses = async () => {
-    if (!user?.email || !currentStore?.id) return;
+    if (!user?.email) return;
 
     try {
-      const customer = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
-      
+      const customer = await userCustomerService.findCustomerByEmail(user.email);
+
       if (customer) {
         const customerAddresses = customer.addresses || [];
         const addressesWithIds = customerAddresses.map((addr, index) => ({
           ...addr,
           id: `addr_${index}` // Generate temporary IDs for addresses
         }));
-        
+
         setAddresses(addressesWithIds);
-        
+
         // Find default address
         if (customer.defaultAddress) {
-          const defaultIndex = customerAddresses.findIndex(addr => 
+          const defaultIndex = customerAddresses.findIndex(addr =>
             JSON.stringify(addr) === JSON.stringify(customer.defaultAddress)
           );
           setDefaultAddressId(defaultIndex >= 0 ? `addr_${defaultIndex}` : null);
@@ -64,13 +63,13 @@ export default function AddressManagementScreen({
   };
 
   const handleSetDefault = async (addressId: string) => {
-    if (!user?.email || !currentStore?.id) return;
+    if (!user?.email) return;
 
     try {
       const address = addresses.find(addr => addr.id === addressId);
       if (!address) return;
 
-      const customer = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
+      const customer = await userCustomerService.findCustomerByEmail(user.email);
       if (!customer) return;
 
       // Update customer with new default address
@@ -87,7 +86,7 @@ export default function AddressManagementScreen({
   };
 
   const handleDeleteAddress = async (addressId: string) => {
-    if (!user?.email || !currentStore?.id) return;
+    if (!user?.email) return;
 
     Alert.alert(
       'Delete Address',
@@ -99,7 +98,7 @@ export default function AddressManagementScreen({
           style: 'destructive',
           onPress: async () => {
             try {
-              const customer = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
+              const customer = await userCustomerService.findCustomerByEmail(user.email);
               if (!customer) return;
 
               const addressIndex = parseInt(addressId.replace('addr_', ''));
@@ -142,7 +141,7 @@ export default function AddressManagementScreen({
 
   useEffect(() => {
     loadAddresses();
-  }, [user?.email, currentStore?.id]);
+  }, [user?.email]);
 
   return (
     <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>

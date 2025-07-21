@@ -151,7 +151,6 @@ const { data: products } = db.useQuery({
   products: {
     $: {
       where: {
-        storeId: currentStore.id,  // Indexed field
         status: 'active',          // Indexed field
         pos: true                  // Indexed field
       }
@@ -177,7 +176,6 @@ const { data: products } = db.useQuery({
 const { data: orders } = db.useQuery({
   orders: {
     $: {
-      where: { storeId: currentStore.id },
       limit: 50,
       offset: page * 50
     }
@@ -428,24 +426,7 @@ const schemaChange: SchemaChange = {
 };
 ```
 
-#### Migration Strategy
-```typescript
-// ✅ Good: Plan migration steps
-interface MigrationPlan {
-  version: string;
-  changes: SchemaChange[];
-  steps: MigrationStep[];
-  rollbackPlan: string[];
-  testingPlan: string[];
-}
 
-interface MigrationStep {
-  order: number;
-  description: string;
-  script?: string;
-  validation?: string;
-  rollback?: string;
-}
 ```
 
 ### 2. Schema Versioning
@@ -476,31 +457,7 @@ export const SCHEMA_HISTORY = [
 ];
 ```
 
-#### Backward Compatibility
-```typescript
-// ✅ Good: Maintain compatibility during transitions
-export const FIELD_MAPPINGS = {
-  // Legacy field name -> New field name
-  'createdat': 'createdAt',
-  'updatedat': 'updatedAt',
-  'billaddrs': 'billingAddress',
-  'shipaddrs': 'shippingAddress',
-  'taxamt': 'taxAmount',
-  'varianttitle': 'variantTitle'
-};
 
-export const mapLegacyFields = (data: any): any => {
-  const mapped = { ...data };
-  
-  Object.entries(FIELD_MAPPINGS).forEach(([oldField, newField]) => {
-    if (mapped[oldField] !== undefined) {
-      mapped[newField] = mapped[oldField];
-      delete mapped[oldField];
-    }
-  });
-  
-  return mapped;
-};
 ```
 
 ### 3. Testing Schema Changes

@@ -36,25 +36,20 @@ export class UserCustomerService {
   async findOrCreateCustomerForUser(user: User, profileData?: {
     name?: string;
     phone?: string;
-  }, storeId: string): Promise<{ success: boolean; customer?: Customer; error?: string }> {
+  }): Promise<{ success: boolean; customer?: Customer; error?: string }> {
     try {
       if (!user.email) {
         return { success: false, error: 'User email is required' };
       }
 
-      if (!storeId) {
-        return { success: false, error: 'Store ID is required' };
-      }
-
       log.info('Finding or creating customer for user', 'UserCustomerService', {
         userId: user.id,
-        email: user.email,
-        storeId
+        email: user.email
       });
 
-      // First, try to find existing customer by email and store
-      const existingCustomer = await this.findCustomerByEmail(user.email, storeId);
-      
+      // First, try to find existing customer by email
+      const existingCustomer = await this.findCustomerByEmail(user.email);
+
       if (existingCustomer) {
         log.info('Found existing customer', 'UserCustomerService', { customerId: existingCustomer.id });
         return { success: true, customer: existingCustomer };
@@ -62,7 +57,6 @@ export class UserCustomerService {
 
       // Create new customer record
       const customerData = {
-        storeId: storeId, // Required field
         name: profileData?.name || user.email.split('@')[0], // Use email prefix as default name
         email: user.email,
         phone: profileData?.phone,
@@ -72,7 +66,7 @@ export class UserCustomerService {
       };
 
       const customerId = id();
-      
+
       await db.transact([
         db.tx.customers[customerId].update(customerData)
       ]);
@@ -99,12 +93,11 @@ export class UserCustomerService {
   /**
    * Find customer by email address
    */
-  async findCustomerByEmail(email: string, storeId: string): Promise<Customer | null> {
+  async findCustomerByEmail(email: string): Promise<Customer | null> {
     try {
-      // Query customers by email and store using InstantDB
+      // Query customers by email using InstantDB
       const whereConditions = {
-        email: email,
-        storeId: storeId
+        email: email
       };
 
       const query = await db.queryOnce({
@@ -117,7 +110,7 @@ export class UserCustomerService {
       });
 
       const customers = query.customers || [];
-      
+
       if (customers.length > 0) {
         const customer = customers[0];
         return {
@@ -167,17 +160,16 @@ export class UserCustomerService {
   /**
    * Get customer order statistics
    */
-  async getCustomerOrderStats(customerEmail: string, storeId: string): Promise<{
+  async getCustomerOrderStats(customerEmail: string): Promise<{
     totalOrders: number;
     totalSpent: number;
     lastOrderDate?: Date;
     recentOrders: any[];
   }> {
     try {
-      // Query orders by customer email and store
+      // Query orders by customer email
       const whereConditions = {
-        customerEmail: customerEmail,
-        storeId: storeId
+        customerEmail: customerEmail
       };
 
       const query = await db.queryOnce({
@@ -192,7 +184,7 @@ export class UserCustomerService {
       });
 
       const orders = query.orders || [];
-      
+
       const totalOrders = orders.length;
       const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
       const lastOrderDate = orders.length > 0 ? new Date(orders[0].createdAt) : undefined;
@@ -217,13 +209,13 @@ export class UserCustomerService {
   /**
    * Update customer order statistics after a new order
    */
-  async updateCustomerOrderStats(customerEmail: string, storeId: string): Promise<void> {
+  async updateCustomerOrderStats(customerEmail: string): Promise<void> {
     try {
       const customer = await this.findCustomerByEmail(customerEmail);
       if (!customer) return;
 
-      const stats = await this.getCustomerOrderStats(customerEmail, storeId);
-      
+      const stats = await this.getCustomerOrderStats(customerEmail);
+
       await db.transact([
         db.tx.customers[customer.id].update({
           totalOrders: stats.totalOrders,
@@ -233,8 +225,8 @@ export class UserCustomerService {
         })
       ]);
 
-      log.info('Updated customer order stats', 'UserCustomerService', { 
-        customerId: customer.id, 
+      log.info('Updated customer order stats', 'UserCustomerService', {
+        customerId: customer.id,
         totalOrders: stats.totalOrders,
         totalSpent: stats.totalSpent
       });
@@ -250,7 +242,7 @@ export class UserCustomerService {
     name?: string;
     phone?: string;
     bio?: string;
-  }, storeId: string): Promise<{ success: boolean; customer?: Customer; error?: string }> {
+  }): Promise<{ success: boolean; customer?: Customer; error?: string }> {
     try {
       if (!user.email) {
         return { success: false, error: 'User email is required' };
@@ -260,7 +252,7 @@ export class UserCustomerService {
       const result = await this.findOrCreateCustomerForUser(user, {
         name: profileData.name,
         phone: profileData.phone
-      }, storeId);
+      });
 
       if (!result.success || !result.customer) {
         return result;

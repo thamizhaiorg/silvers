@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../../lib/instant';
-import { useStore } from '../../lib/store-context';
+
 import ProductGrid, { EmptyProductGrid } from '../../components/ui/product-grid';
 import R2Image from '../../components/ui/r2-image';
 
@@ -12,29 +12,15 @@ export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { currentStore } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Query products and categories
-  const { isLoading, error, data } = db.useQuery(
-    currentStore?.id ? {
-      products: {
-        $: {
-          where: {
-            storeId: currentStore.id
-          }
-        },
-        category: {}
-      },
-      categories: {
-        $: {
-          where: {
-            storeId: currentStore.id
-          }
-        }
-      }
-    } : null
-  );
+  const { isLoading, error, data } = db.useQuery({
+    products: {
+      category: {}
+    },
+    categories: {}
+  });
 
   const products = data?.products || [];
   const categories = data?.categories || [];

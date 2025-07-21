@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, TextInput, BackHandler } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
-import { useStore } from '../lib/store-context';
+
 import ProductGrid, { EmptyProductGrid } from './ui/product-grid';
 
 interface CategoryProductsScreenProps {
@@ -20,7 +20,6 @@ export default function CategoryProductsScreen({
   onNavigateToProduct
 }: CategoryProductsScreenProps) {
   const insets = useSafeAreaInsets();
-  const { currentStore } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Handle Android back button
@@ -35,25 +34,12 @@ export default function CategoryProductsScreen({
   }, [onClose]);
 
   // Query products and categories
-  const { isLoading, error, data } = db.useQuery(
-    currentStore?.id ? {
-      products: {
-        $: {
-          where: {
-            storeId: currentStore.id
-          }
-        },
-        category: {}
-      },
-      categories: {
-        $: {
-          where: {
-            storeId: currentStore.id
-          }
-        }
-      }
-    } : null
-  );
+  const { isLoading, error, data } = db.useQuery({
+    products: {
+      category: {}
+    },
+    categories: {}
+  });
 
   const products = data?.products || [];
   const categories = data?.categories || [];

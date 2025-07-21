@@ -842,28 +842,28 @@ describe('Schema Performance Benchmarks', () => {
         // Product queries
         performanceUtils.measureQuery('mixed-product-query', async () => {
           const { products } = db.useQuery({
-            products: { $: { where: { storeId: testStoreId, pos: true } } }
+            products: { $: { where: { pos: true } } }
           });
           return products;
         }),
         // Order queries
         performanceUtils.measureQuery('mixed-order-query', async () => {
           const { orders } = db.useQuery({
-            orders: { $: { where: { storeId: testStoreId, paymentStatus: 'paid' } } }
+            orders: { $: { where: { paymentStatus: 'paid' } } }
           });
           return orders;
         }),
         // Inventory queries
         performanceUtils.measureQuery('mixed-inventory-query', async () => {
           const { items } = db.useQuery({
-            items: { $: { where: { storeId: testStoreId, totalOnHand: { $gt: 0 } } } }
+            items: { $: { where: { totalOnHand: { $gt: 0 } } } }
           });
           return items;
         }),
         // Customer queries
         performanceUtils.measureQuery('mixed-customer-query', async () => {
           const { customers } = db.useQuery({
-            customers: { $: { where: { storeId: testStoreId, totalOrders: { $gt: 0 } } } }
+            customers: { $: { where: { totalOrders: { $gt: 0 } } } }
           });
           return customers;
         }),

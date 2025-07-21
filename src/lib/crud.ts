@@ -44,7 +44,6 @@ export interface CreateProductData {
 export interface OptionSet {
   id: string;
   set: string; // Option set name (e.g., "Size", "Color")
-  storeId: string;
 }
 
 

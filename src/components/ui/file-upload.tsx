@@ -5,7 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { r2Service, MediaFile, UploadResult } from '../../lib/r2-service';
 import { db, getCurrentTimestamp } from '../../lib/instant';
-import { useStore } from '../../lib/store-context';
+
 // import { fileManager } from '../../lib/file-manager'; // Removed for e-commerce storefront
 import { log } from '../../lib/logger';
 import { id } from '@instantdb/react-native';
@@ -50,7 +50,6 @@ export default function FileUpload({
   className = '',
   style
 }: FileUploadProps) {
-  const { currentStore } = useStore();
   const { user } = db.useAuth();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -105,11 +104,6 @@ export default function FileUpload({
   };
 
   const generateR2Path = (fileName: string, fileType: string): string => {
-    if (!currentStore) return `files/${fileName}`;
-    
-    // Sanitize store ID
-    const sanitizedStoreId = currentStore.id.replace(/[^a-zA-Z0-9]/g, '');
-    
     // Determine category based on reference or file type
     let category = 'general';
     if (reference) {
@@ -130,7 +124,7 @@ export default function FileUpload({
     // Clean filename
     const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '').toLowerCase();
     
-    return `${sanitizedStoreId}/${category}/${randomNumber}/${cleanFileName}`;
+    return `${category}/${randomNumber}/${cleanFileName}`;
   };
 
   const uploadFile = async (file: any) => {
@@ -148,7 +142,6 @@ export default function FileUpload({
 
       // Use file manager for upload
       const uploadOptions = {
-        storeId: currentStore.id,
         userId: user.id,
         category: acceptedTypes === 'images' ? 'images' :
                  acceptedTypes === 'videos' ? 'videos' :

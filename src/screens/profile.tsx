@@ -9,7 +9,7 @@ import { r2Service } from '../lib/r2-service';
 import { db, formatCurrency } from '../lib/instant';
 import { orderHistoryService } from '../services/order-history-service';
 import { userCustomerService } from '../services/user-customer-service';
-import { useStore } from '../lib/store-context';
+
 
 interface ProfileScreenProps {
   onClose?: () => void;
@@ -20,7 +20,6 @@ interface ProfileScreenProps {
 export default function ProfileScreen({ onClose, onNavigateToOrderHistory, onNavigateToAddresses }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { user, peopleaProfile, createPeopleaProfile, updatePeopleaProfile, signOut, linkUserToCustomer } = useAuth();
-  const { currentStore } = useStore();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +50,11 @@ export default function ProfileScreen({ onClose, onNavigateToOrderHistory, onNav
   // Load order statistics
   useEffect(() => {
     const loadOrderStats = async () => {
-      if (!user?.email || !currentStore?.id) return;
+      if (!user?.email) return;
 
       try {
-        const summaryResult = await orderHistoryService.getUserOrderSummary(user.email, currentStore.id);
-        const recentResult = await orderHistoryService.getRecentUserOrders(user.email, currentStore.id, 3);
+        const summaryResult = await orderHistoryService.getUserOrderSummary(user.email);
+        const recentResult = await orderHistoryService.getRecentUserOrders(user.email, 3);
 
         if (summaryResult.success && summaryResult.summary) {
           setOrderStats({
@@ -70,19 +69,19 @@ export default function ProfileScreen({ onClose, onNavigateToOrderHistory, onNav
     };
 
     loadOrderStats();
-  }, [user?.email, currentStore?.id]);
+  }, [user?.email]);
 
   // Load address statistics and link user to customer
   useEffect(() => {
     const loadAddressStats = async () => {
-      if (!user?.email || !currentStore?.id) return;
+      if (!user?.email) return;
 
       try {
-        // First ensure user is linked to customer with store context
-        await linkUserToCustomer(currentStore.id);
+        // First ensure user is linked to customer
+        await linkUserToCustomer();
 
         // Get customer record to access addresses
-        const customer = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
+        const customer = await userCustomerService.findCustomerByEmail(user.email);
 
         if (customer) {
           const addresses = customer.addresses || [];
@@ -100,7 +99,7 @@ export default function ProfileScreen({ onClose, onNavigateToOrderHistory, onNav
     };
 
     loadAddressStats();
-  }, [user?.email, currentStore?.id]);
+  }, [user?.email]);
 
   // Initialize form data when profile loads
   useEffect(() => {

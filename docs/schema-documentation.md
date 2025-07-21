@@ -384,31 +384,7 @@ inventoryLocation: {
 - `customers.email` - Valid email format when provided
 - Structured data fields use `json` type for proper validation
 
-## Migration Guide
 
-### From Legacy Schema (v1.0) to Optimized Schema (v2.0)
-
-#### Field Name Changes
-
-**Products Entity:**
-```sql
--- Timestamp field standardization
-createdat → createdAt
-updatedat → updatedAt
-
--- Relationship field additions
-brand (string) → brandId (relationship)
-category (string) → categoryId (relationship)
-type (string) → typeId (relationship)
-vendor (string) → vendorId (relationship)
-```
-
-**Orders Entity:**
-```sql
--- Remove duplicate fields
-taxamt → taxAmount (consolidated)
-billaddrs → billingAddress (structured)
-shipaddrs → shippingAddress (structured)
 
 -- Timestamp standardization
 createdat → createdAt
@@ -447,45 +423,7 @@ orders.total: optional → required
 orders.subtotal: optional → required
 ```
 
-### Migration Steps
 
-1. **Backup Current Data**
-   ```bash
-   # Export current data before migration
-   npm run export-data
-   ```
-
-2. **Apply Schema Changes**
-   ```bash
-   # Update schema file
-   npm run update-schema
-   ```
-
-3. **Run Data Migration**
-   ```bash
-   # Transform existing data
-   npm run migrate-data
-   ```
-
-4. **Validate Migration**
-   ```bash
-   # Verify data integrity
-   npm run validate-migration
-   ```
-
-5. **Update Application Code**
-   ```bash
-   # Update queries and components
-   npm run update-app-code
-   ```
-
-### Backward Compatibility
-
-During the migration period, the system supports both old and new field names through:
-
-- **Query Transformation**: Legacy queries are automatically transformed
-- **Data Mapping**: Old field names are mapped to new field names
-- **Gradual Migration**: Components can be updated incrementally
 
 ## API Documentation Updates
 
@@ -519,8 +457,7 @@ const { data: orders } = db.useQuery({
   orders: {
     $: {
       where: {
-        status: 'pending',
-        storeId: currentStore.id
+        status: 'pending'
       }
     },
     location: {}  // Uses new ordersLocation relationship
@@ -614,10 +551,7 @@ db.transact([
 
 ### Common Issues
 
-**Migration Issues:**
-- **Field Type Conflicts**: Use data transformation utilities
-- **Missing Required Data**: Implement default value strategies
-- **Relationship Integrity**: Validate foreign keys before migration
+
 
 **Performance Issues:**
 - **Slow Queries**: Check index usage and add missing indexes
@@ -633,5 +567,5 @@ db.transact([
 
 - **Schema Analysis Tools**: Use `scripts/analyze-schema.ts`
 - **Performance Benchmarks**: Use `scripts/performance-benchmark.ts`
-- **Migration Utilities**: Available in `src/lib/migration/`
+
 - **Validation Services**: Use `src/services/validation-service.ts`

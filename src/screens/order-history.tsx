@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
 import { db, formatCurrency } from '../lib/instant';
-import { useStore } from '../lib/store-context';
+
 
 interface Order {
   id: string;
@@ -45,19 +45,17 @@ interface OrderHistoryScreenProps {
 export default function OrderHistoryScreen({ onClose, onOrderSelect }: OrderHistoryScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { currentStore } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Query user's orders by matching email and store
+  // Query user's orders by matching email
   const { data: ordersData, isLoading, error } = db.useQuery(
-    user?.email && currentStore?.id ? {
+    user?.email ? {
       orders: {
         $: {
           where: {
             customerEmail: user.email,
-            storeId: currentStore.id,
           },
           order: {
             createdAt: 'desc'

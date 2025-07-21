@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
 import { useCart } from '../lib/cart-context';
-import { useStore } from '../lib/store-context';
+
 import { userCustomerService } from '../services/user-customer-service';
 import { formatCurrency, db } from '../lib/instant';
 import { id } from '@instantdb/react-native';
@@ -27,7 +27,6 @@ export default function CheckoutScreen({
 }: CheckoutScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { currentStore } = useStore();
   const { items: cartItems, totals, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -40,9 +39,7 @@ export default function CheckoutScreen({
       if (!user?.email) return;
 
       try {
-        if (!currentStore?.id) return;
-
-        const customerResult = await userCustomerService.findOrCreateCustomerForUser(user, undefined, currentStore.id);
+        const customerResult = await userCustomerService.findOrCreateCustomerForUser(user, undefined);
         
         if (customerResult.success && customerResult.customer) {
           setCustomer(customerResult.customer);
@@ -75,10 +72,7 @@ export default function CheckoutScreen({
       return;
     }
 
-    if (!currentStore?.id) {
-      Alert.alert('Error', 'Store information not available.');
-      return;
-    }
+
 
     setIsLoading(true);
 
@@ -88,7 +82,6 @@ export default function CheckoutScreen({
       
       // Create order data
       const orderData = {
-        storeId: currentStore.id,
         orderNumber,
         referenceId: orderId,
         createdAt: new Date(),
@@ -129,7 +122,6 @@ export default function CheckoutScreen({
           taxRate: 0.08,
           taxAmount: (item.total * 0.08),
           discountAmount: 0,
-          storeId: currentStore.id,
           fulfillmentStatus: 'unfulfilled'
         });
       });
@@ -142,7 +134,7 @@ export default function CheckoutScreen({
 
       // Update customer stats if customer exists
       if (customer) {
-        await userCustomerService.updateCustomerOrderStats(user?.email || '', currentStore.id);
+        await userCustomerService.updateCustomerOrderStats(user?.email || '');
       }
 
       // Clear cart and show success

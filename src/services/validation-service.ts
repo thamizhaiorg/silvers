@@ -404,10 +404,7 @@ export class ValidationService {
       errors.referenceId = 'Reference ID must be less than 100 characters';
     }
 
-    // Store ID validation (required field)
-    if (isRequired && !data.storeId?.trim()) {
-      errors.storeId = 'Store ID is required';
-    }
+
 
     // Customer email validation (when provided)
     if (data.customerEmail && !this.isValidEmail(data.customerEmail)) {

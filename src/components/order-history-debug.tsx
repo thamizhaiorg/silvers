@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-import { useStore } from '../lib/store-context';
+
 import { db, formatCurrency } from '../lib/instant';
 import { orderHistoryService } from '../services/order-history-service';
 import { userCustomerService } from '../services/user-customer-service';
@@ -15,20 +15,18 @@ interface OrderHistoryDebugProps {
 export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { currentStore } = useStore();
   const [debugInfo, setDebugInfo] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const runDiagnostics = async () => {
-    if (!user?.email || !currentStore?.id) {
-      Alert.alert('Error', 'User email or store not available');
+    if (!user?.email) {
+      Alert.alert('Error', 'User email not available');
       return;
     }
 
     setIsLoading(true);
     const info: any = {
       userEmail: user.email,
-      storeId: currentStore.id,
       timestamp: new Date().toISOString()
     };
 
@@ -39,8 +37,7 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
         orders: {
           $: {
             where: {
-              customerEmail: user.email,
-              storeId: currentStore.id
+              customerEmail: user.email
             },
             order: { createdAt: 'desc' }
           },
@@ -50,17 +47,16 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
       info.rawOrdersCount = rawQuery.orders?.length || 0;
       info.rawOrders = rawQuery.orders?.slice(0, 3) || [];
 
-      // 2. Check all orders in store
-      console.log('🔍 Checking all orders in store...');
+      // 2. Check all orders
+      console.log('🔍 Checking all orders...');
       const allOrdersQuery = await db.queryOnce({
         orders: {
           $: {
-            where: { storeId: currentStore.id },
             order: { createdAt: 'desc' }
           }
         }
       });
-      info.allOrdersInStore = allOrdersQuery.orders?.length || 0;
+      info.allOrders = allOrdersQuery.orders?.length || 0;
       info.sampleOrders = allOrdersQuery.orders?.slice(0, 3).map(order => ({
         id: order.id,
         orderNumber: order.orderNumber,
@@ -83,7 +79,7 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
 
       // 4. Check order history service
       console.log('🔍 Testing order history service...');
-      const historyResult = await orderHistoryService.getUserOrderHistory(user.email, currentStore.id);
+      const historyResult = await orderHistoryService.getUserOrderHistory(user.email);
       info.orderHistoryService = {
         success: historyResult.success,
         ordersCount: historyResult.orders?.length || 0,
@@ -92,7 +88,7 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
 
       // 5. Check order summary
       console.log('🔍 Testing order summary service...');
-      const summaryResult = await orderHistoryService.getUserOrderSummary(user.email, currentStore.id);
+      const summaryResult = await orderHistoryService.getUserOrderSummary(user.email);
       info.orderSummaryService = {
         success: summaryResult.success,
         summary: summaryResult.summary,
@@ -101,7 +97,7 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
 
       // 6. Check address management
       console.log('🔍 Testing address management...');
-      const customerRecord = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
+      const customerRecord = await userCustomerService.findCustomerByEmail(user.email);
       info.addressManagement = {
         customerFound: !!customerRecord,
         addressCount: customerRecord?.addresses?.length || 0,
@@ -122,18 +118,18 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
   };
 
   const createTestOrder = async () => {
-    if (!user?.email || !currentStore?.id) {
-      Alert.alert('Error', 'User email or store not available');
+    if (!user?.email) {
+      Alert.alert('Error', 'User email not available');
       return;
     }
 
     try {
       setIsLoading(true);
-      
+
       // First ensure customer exists
       const customerResult = await userCustomerService.findOrCreateCustomerForUser(user, {
         name: user.email.split('@')[0]
-      }, currentStore.id);
+      });
 
       if (!customerResult.success) {
         Alert.alert('Error', 'Failed to create customer: ' + customerResult.error);
@@ -145,7 +141,6 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
       const orderNumber = `TEST-${Date.now().toString().slice(-6)}`;
       
       const orderData = {
-        storeId: currentStore.id,
         orderNumber,
         referenceId: orderId,
         createdAt: new Date(),
@@ -178,7 +173,7 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
 
   useEffect(() => {
     runDiagnostics();
-  }, [user?.email, currentStore?.id]);
+  }, [user?.email]);
 
   return (
     <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>
@@ -238,13 +233,10 @@ export default function OrderHistoryDebug({ onClose }: OrderHistoryDebugProps) {
                 📧 User Email: {debugInfo.userEmail}
               </Text>
               <Text className="text-gray-700">
-                🏪 Store ID: {debugInfo.storeId}
-              </Text>
-              <Text className="text-gray-700">
                 📦 User Orders: {debugInfo.rawOrdersCount}
               </Text>
               <Text className="text-gray-700">
-                📋 All Store Orders: {debugInfo.allOrdersInStore}
+                📋 All Orders: {debugInfo.allOrders}
               </Text>
               <Text className="text-gray-700">
                 👤 Customer Record: {debugInfo.customerRecord ? '✅ Found' : '❌ Not Found'}

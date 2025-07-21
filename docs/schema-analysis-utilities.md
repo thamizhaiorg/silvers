@@ -56,29 +56,9 @@ const relResult = SchemaValidator.validateRelationship('products', 'brandId', 'b
 console.log(relResult.isValid); // true
 ```
 
-### 3. SchemaComparator (`src/lib/schema-comparison.ts`)
 
-Tools for comparing schema versions and tracking changes over time.
 
-**Key Features:**
-- Creates schema snapshots for version tracking
-- Compares two schema versions and identifies changes
-- Categorizes changes by impact (breaking, non-breaking, enhancement)
-- Generates migration plans based on detected changes
-
-**Usage:**
-```typescript
-import { SchemaSnapshotManager, SchemaComparator } from './src/lib/schema-comparison';
-
-// Create snapshot
-const snapshot = SchemaSnapshotManager.createSnapshot(schema, '1.0.0');
-
-// Compare snapshots
-const comparison = SchemaComparator.compareSchemas(oldSnapshot, newSnapshot);
-console.log(`Found ${comparison.changes.length} changes`);
-```
-
-### 4. SchemaUtils (`src/lib/schema-utils.ts`)
+### 3. SchemaUtils (`src/lib/schema-utils.ts`)
 
 High-level utility functions for common schema operations.
 

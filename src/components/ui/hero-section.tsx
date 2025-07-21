@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useStore } from '../../lib/store-context';
+
 import { SectionDivider } from './marketplace-sections';
 
 interface HeroSectionProps {
@@ -21,7 +21,6 @@ export default function HeroSection({
   onNavigateToCart,
   cartItemCount = 0,
 }: HeroSectionProps) {
-  const { currentStore } = useStore();
 
   return (
     <View className="bg-silver-500">
@@ -31,7 +30,7 @@ export default function HeroSection({
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-1">
             <Text className="text-white text-xl font-bold">
-              {currentStore?.name || 'Silvers Collection'}
+              SKJ Silversmith
             </Text>
             <Text className="text-silver-100 text-sm mt-1">
               Handcrafted Silver Jewelry & Accessories

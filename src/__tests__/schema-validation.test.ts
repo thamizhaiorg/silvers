@@ -55,7 +55,6 @@ const SchemaValidator = {
 const generateMockData = {
   product: (overrides: any = {}) => ({
     id: `product-${Date.now()}-${Math.random()}`,
-    storeId: 'test-store-id',
     title: 'Test Product',
     createdAt: new Date(),
     status: 'active',
@@ -64,10 +63,9 @@ const generateMockData = {
     featured: false,
     ...overrides,
   }),
-  
+
   order: (overrides: any = {}) => ({
     id: `order-${Date.now()}-${Math.random()}`,
-    storeId: 'test-store-id',
     orderNumber: `ORD-${Date.now()}`,
     referenceId: `REF-${Date.now()}`,
     subtotal: 100.00,
@@ -82,25 +80,22 @@ const generateMockData = {
   orderItem: (overrides: any = {}) => ({
     id: `item-${Date.now()}-${Math.random()}`,
     orderId: 'test-order-id',
-    storeId: 'test-store-id',
     title: 'Test Item',
     quantity: 1,
     price: 29.99,
     lineTotal: 29.99,
     ...overrides,
   }),
-  
+
   customer: (overrides: any = {}) => ({
     id: `customer-${Date.now()}-${Math.random()}`,
-    storeId: 'test-store-id',
     name: 'Test Customer',
     createdAt: new Date(),
     ...overrides,
   }),
-  
+
   inventoryLocation: (overrides: any = {}) => ({
     id: `iloc-${Date.now()}-${Math.random()}`,
-    storeId: 'test-store-id',
     itemId: 'test-item-id',
     locationId: 'test-location-id',
     onHand: 10,
@@ -110,10 +105,9 @@ const generateMockData = {
     createdAt: new Date(),
     ...overrides,
   }),
-  
+
   inventoryAdjustment: (overrides: any = {}) => ({
     id: `adj-${Date.now()}-${Math.random()}`,
-    storeId: 'test-store-id',
     itemId: 'test-item-id',
     locationId: 'test-location-id',
     quantityBefore: 10,
@@ -233,7 +227,6 @@ describe('Schema Validation Tests', () => {
       (db.transact as jest.Mock) = mockTransact;
       
       const orderData = generateMockData.order();
-      delete orderData.storeId; // Remove required field
       delete orderData.total; // Remove required field
       delete orderData.subtotal; // Remove required field
       
@@ -267,7 +260,6 @@ describe('Schema Validation Tests', () => {
       (db.transact as jest.Mock) = mockTransact;
       
       const ilocData = generateMockData.inventoryLocation();
-      delete ilocData.storeId; // Remove required field
       delete ilocData.itemId; // Remove required field
       delete ilocData.locationId; // Remove required field
       
@@ -375,15 +367,14 @@ describe('Schema Validation Tests', () => {
       }
     });
     
-    test('should enforce SKU uniqueness within store scope', async () => {
+    test('should enforce SKU uniqueness', async () => {
       const mockTransact = jest.fn();
       (db.transact as jest.Mock) = mockTransact;
-      
+
       const sku = `SKU-${Date.now()}`;
-      const storeId = 'test-store-id';
-      
-      const product1 = generateMockData.product({ sku, storeId });
-      const product2 = generateMockData.product({ sku, storeId }); // Duplicate in same store
+
+      const product1 = generateMockData.product({ sku });
+      const product2 = generateMockData.product({ sku }); // Duplicate SKU
       
       try {
         await db.transact([
@@ -609,7 +600,6 @@ describe('Schema Validation Tests', () => {
       (db.transact as jest.Mock) = mockTransact;
       
       const adjustmentData = generateMockData.inventoryAdjustment();
-      delete adjustmentData.storeId; // Remove required field
       delete adjustmentData.itemId; // Remove required field
       delete adjustmentData.type; // Remove required field
       
@@ -644,7 +634,6 @@ describe('Schema Validation Tests', () => {
       
       // Required fields
       expect(SchemaValidator.validateRequired(productData.title)).toBe(true);
-      expect(SchemaValidator.validateRequired(productData.storeId)).toBe(true);
       expect(SchemaValidator.validateRequired(productData.createdAt)).toBe(true);
       
       // Optional fields can be undefined
@@ -736,15 +725,13 @@ describe('Schema Validation Tests', () => {
         id: 'cart-1',
         sessionId: 'session-123',
         userId: 'user-456', // Optional for authenticated users
-        storeId: 'store-789',
         productId: 'product-101',
         quantity: 2,
         price: 29.99,
       };
-      
+
       // Cart should have either sessionId or userId (or both)
       expect(cartData.sessionId || cartData.userId).toBeTruthy();
-      expect(SchemaValidator.validateRequired(cartData.storeId)).toBe(true);
       expect(SchemaValidator.validateRequired(cartData.productId)).toBe(true);
       expect(SchemaValidator.validatePositive(cartData.quantity)).toBe(true);
       expect(SchemaValidator.validatePositive(cartData.price)).toBe(true);
@@ -754,11 +741,9 @@ describe('Schema Validation Tests', () => {
       const orderData = generateMockData.order();
       const orderItemData = generateMockData.orderItem({
         orderId: orderData.id,
-        storeId: orderData.storeId,
       });
-      
-      // Order item should reference the same store as the order
-      expect(orderItemData.storeId).toBe(orderData.storeId);
+
+      // Order item should reference the order
       expect(orderItemData.orderId).toBe(orderData.id);
       
       // Required fields validation
@@ -773,14 +758,12 @@ describe('Schema Validation Tests', () => {
       const itemData = {
         id: 'item-1',
         productId: productData.id,
-        storeId: productData.storeId,
         sku: 'ITEM-SKU-123',
         price: 29.99,
         cost: 15.00,
       };
-      
-      // Item should reference the same store as the product
-      expect(itemData.storeId).toBe(productData.storeId);
+
+      // Item should reference the product
       expect(itemData.productId).toBe(productData.id);
       
       // Pricing should be consistent
@@ -850,52 +833,5 @@ describe('Schema Validation Tests', () => {
     });
   });
 
-  describe('Data Migration Validation', () => {
-    
-    test('should validate field name consistency after migration', () => {
-      // Test that old field names are not present after migration
-      const migratedProductData = {
-        createdAt: new Date(), // Not createdat
-        updatedAt: new Date(), // Not updatedat
-        title: 'Product Title', // Required field
-        status: 'active', // Not boolean publish
-      };
-      
-      expect(migratedProductData).toHaveProperty('createdAt');
-      expect(migratedProductData).toHaveProperty('updatedAt');
-      expect(migratedProductData).not.toHaveProperty('createdat');
-      expect(migratedProductData).not.toHaveProperty('updatedat');
-      expect(migratedProductData).not.toHaveProperty('publish');
-    });
-    
-    test('should validate consolidated field migration', () => {
-      // Test that duplicate fields are consolidated
-      const migratedOrderData = {
-        taxAmount: 10.00, // Not taxamt
-        discountAmount: 5.00, // Not discount
-        referenceId: 'REF-123', // Not referid
-      };
-      
-      expect(migratedOrderData).toHaveProperty('taxAmount');
-      expect(migratedOrderData).toHaveProperty('discountAmount');
-      expect(migratedOrderData).toHaveProperty('referenceId');
-      expect(migratedOrderData).not.toHaveProperty('taxamt');
-      expect(migratedOrderData).not.toHaveProperty('discount');
-      expect(migratedOrderData).not.toHaveProperty('referid');
-    });
-    
-    test('should validate type migration from any to json', () => {
-      // Test that 'any' types are properly converted to 'json'
-      const structuredData = {
-        seo: { title: 'SEO Title', description: 'Description' },
-        metafields: { custom: 'value' },
-        options: [{ name: 'Size', values: ['S', 'M', 'L'] }],
-      };
-      
-      // These should be valid json objects, not 'any' type
-      expect(SchemaValidator.validateFieldType(structuredData.seo, 'json')).toBe(true);
-      expect(SchemaValidator.validateFieldType(structuredData.metafields, 'json')).toBe(true);
-      expect(SchemaValidator.validateFieldType(structuredData.options, 'json')).toBe(true);
-    });
-  });
+
 });

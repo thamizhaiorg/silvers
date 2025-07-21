@@ -13,7 +13,7 @@ interface AuthContextType {
   createPeopleaProfile: (data: Partial<PeopleaProfile>) => Promise<void>;
   updatePeopleaProfile: (data: Partial<PeopleaProfile>) => Promise<void>;
   customerProfile: Customer | null;
-  linkUserToCustomer: (storeId: string) => Promise<void>;
+  linkUserToCustomer: () => Promise<void>;
 }
 
 interface PeopleaProfile {
@@ -62,14 +62,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Note: linkUserToCustomer is now called manually with storeId from components
 
-  const linkUserToCustomer = async (storeId: string) => {
-    if (!user || !user.email || !storeId) return;
+  const linkUserToCustomer = async () => {
+    if (!user || !user.email) return;
 
     try {
       const result = await userCustomerService.findOrCreateCustomerForUser(user, {
         name: peopleaProfile?.name,
         phone: peopleaProfile?.phone
-      }, storeId);
+      });
 
       if (result.success && result.customer) {
         setCustomerProfile(result.customer);

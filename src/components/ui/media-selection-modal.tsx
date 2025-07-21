@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { db } from '../../lib/instant';
-import { useStore } from '../../lib/store-context';
+
 // import { useFiles } from '../../hooks/useFiles'; // Removed for e-commerce storefront
 // import { fileManager } from '../../lib/file-manager'; // Removed for e-commerce storefront
 import { log } from '../../lib/logger';
@@ -45,7 +45,6 @@ export default function MediaSelectionModal({
   // console.log('📱 MEDIA MODAL: Component rendered', { visible, reference });
 
   const insets = useSafeAreaInsets();
-  const { currentStore } = useStore();
   const { user } = db.useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,8 +111,8 @@ export default function MediaSelectionModal({
   };
 
   const handleUpload = async () => {
-    if (!currentStore || !user) {
-      Alert.alert('Error', 'Please ensure you are logged in and have a store selected');
+    if (!user) {
+      Alert.alert('Error', 'Please ensure you are logged in');
       return;
     }
 

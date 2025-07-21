@@ -6,7 +6,6 @@
  */
 
 import { SchemaAnalyzer, type SchemaAnalysisReport, type SchemaInconsistency } from './schema-analysis';
-import { SchemaComparator, SchemaSnapshotManager, type SchemaSnapshot, type SchemaComparison } from './schema-comparison';
 import schema from '../../instant.schema';
 
 /**
@@ -62,40 +61,7 @@ export class SchemaUtils {
     }
   }
 
-  /**
-   * Creates a snapshot of the current schema
-   */
-  public static createCurrentSnapshot(version: string = '1.0.0'): SchemaSnapshot {
-    const snapshot = SchemaSnapshotManager.createSnapshot(schema, version);
-    return snapshot;
-  }
 
-  /**
-   * Compares two schema snapshots
-   */
-  public static compareSnapshots(oldSnapshot: SchemaSnapshot, newSnapshot: SchemaSnapshot): SchemaComparison {
-    const comparison = SchemaComparator.compareSchemas(oldSnapshot, newSnapshot);
-    return comparison;
-  }
-
-  /**
-   * Displays detailed change information
-   */
-  public static displayChanges(comparison: SchemaComparison): void {
-    if (!comparison.hasChanges) {
-      return;
-    }
-    
-    const groupedChanges = this.groupChangesByType(comparison.changes);
-    
-    for (const [changeType, changes] of Object.entries(groupedChanges)) {
-      if (changes.length === 0) continue;
-      
-      for (const change of changes) {
-        // Process changes silently
-      }
-    }
-  }
 
   /**
    * Groups changes by type

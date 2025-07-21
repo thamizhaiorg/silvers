@@ -155,9 +155,9 @@ export class ProductService {
   }
 
   // Create a new product - updated for optimized schema with validation
-  async createProduct(productData: Partial<Product>, storeId: string): Promise<{ success: boolean; productId?: string; error?: string }> {
+  async createProduct(productData: Partial<Product>): Promise<{ success: boolean; productId?: string; error?: string }> {
     try {
-      log.info('Creating product', 'ProductService', { productData, storeId });
+      log.info('Creating product', 'ProductService', { productData });
 
       // Import validation service for enhanced validation
       const { ValidationService } = await import('./validation-service');
@@ -188,7 +188,6 @@ export class ProductService {
       const product = {
         ...productData,
         id: newId,
-        storeId,
         createdAt: timestamp,
         updatedAt: timestamp,
         // Use new status field values instead of publish boolean
@@ -208,7 +207,7 @@ export class ProductService {
       log.info('Product created successfully', 'ProductService', { productId: newId });
       return { success: true, productId: newId };
     } catch (error) {
-      trackError(error as Error, 'ProductService', { operation: 'createProduct', productData, storeId });
+      trackError(error as Error, 'ProductService', { operation: 'createProduct', productData });
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
@@ -296,9 +295,9 @@ export class ProductService {
   }
 
   // Duplicate a product
-  async duplicateProduct(productId: string, storeId: string): Promise<{ success: boolean; productId?: string; error?: string }> {
+  async duplicateProduct(productId: string): Promise<{ success: boolean; productId?: string; error?: string }> {
     try {
-      log.info('Duplicating product', 'ProductService', { productId, storeId });
+      log.info('Duplicating product', 'ProductService', { productId });
 
       // This would need to fetch the original product first
       // For now, this is a placeholder implementation
@@ -308,7 +307,6 @@ export class ProductService {
       // In a real implementation, you'd fetch the original product and copy its data
       const duplicatedProduct = {
         id: newId,
-        storeId,
         title: 'Copy of Product', // This would be the original title with "Copy of" prefix
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -322,7 +320,7 @@ export class ProductService {
       log.info('Product duplicated successfully', 'ProductService', { originalId: productId, newId });
       return { success: true, productId: newId };
     } catch (error) {
-      trackError(error as Error, 'ProductService', { operation: 'duplicateProduct', productId, storeId });
+      trackError(error as Error, 'ProductService', { operation: 'duplicateProduct', productId });
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }

@@ -16,7 +16,7 @@ import AddressSelector from "../components/address-selector";
 import CategoryProductsScreen from "../components/category-products";
 import BottomNavigation, { BottomTabScreen } from "../components/nav";
 import CartScreen from "../components/cart";
-import { StoreProvider } from "../lib/store-context";
+
 import ErrorBoundary from "../components/ui/error-boundary";
 
 
@@ -247,24 +247,22 @@ export default function Page() {
   }
 
   return (
-    <StoreProvider>
-      <ErrorBoundary>
-        <View className="flex flex-1">
-          {/* All screens are now full-screen without header */}
-          <ErrorBoundary>
-            {renderMainContent()}
-          </ErrorBoundary>
-          {/* Bottom Navigation for main tab screens only */}
-          {(currentScreen === 'products' || currentScreen === 'collections' || currentScreen === 'cart' || currentScreen === 'profile') && (
-            <BottomNavigation
-              activeTab={activeBottomTab}
-              onTabPress={handleBottomTabPress}
-              cartItemCount={itemCount}
-            />
-          )}
-        </View>
-      </ErrorBoundary>
-    </StoreProvider>
+    <ErrorBoundary>
+      <View className="flex flex-1">
+        {/* All screens are now full-screen without header */}
+        <ErrorBoundary>
+          {renderMainContent()}
+        </ErrorBoundary>
+        {/* Bottom Navigation for main tab screens only */}
+        {(currentScreen === 'products' || currentScreen === 'collections' || currentScreen === 'cart' || currentScreen === 'profile') && (
+          <BottomNavigation
+            activeTab={activeBottomTab}
+            onTabPress={handleBottomTabPress}
+            cartItemCount={itemCount}
+          />
+        )}
+      </View>
+    </ErrorBoundary>
   );
 }
 
