@@ -150,8 +150,8 @@ export default function OrderCreate({ onClose, onOrderCreated }: OrderCreateProp
       const orderData = {
         storeId: currentStore.id,
         orderNumber,
-        referid: orderId,
-        createdat: new Date(),
+        referenceId: orderId, // Fixed: use referenceId instead of referid
+        createdAt: new Date(), // Fixed: use createdAt instead of createdat
         customerId: selectedCustomer?.id,
         customerName: selectedCustomer?.name,
         customerEmail: selectedCustomer?.email,
@@ -178,13 +178,13 @@ export default function OrderCreate({ onClose, onOrderCreated }: OrderCreateProp
       const orderItemTransactions = orderItems.map(item => {
         const itemId = id();
         return db.tx.orderitems[itemId].update({
-          orderid: orderId,
+          orderId: orderId, // Fixed: use orderId instead of orderid
           productId: item.productId,
           itemId: item.itemId,
           sku: item.sku,
           title: item.title,
           variantTitle: item.variantTitle,
-          qty: item.qty,
+          quantity: item.qty, // Fixed: use quantity instead of qty
           price: item.price,
           compareAtPrice: item.compareAtPrice,
           cost: item.cost,

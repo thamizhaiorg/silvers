@@ -18,6 +18,13 @@ import Locations from "../components/locations";
 import ItemsScreen from "../components/items";
 import FilesScreen from "../components/files";
 import ProfileScreen from "../screens/profile";
+import OrderHistoryScreen from "../screens/order-history";
+import OrderDetails from "../components/order-details";
+import OrderHistoryDebug from "../components/order-history-debug";
+import AddressManagementScreen from "../screens/address-management";
+import AddressForm from "../components/address-form";
+import CheckoutScreen from "../components/checkout";
+import AddressSelector from "../components/address-selector";
 
 import BottomNavigation, { BottomTabScreen } from "../components/nav";
 import CartScreen from "../components/cart";
@@ -42,7 +49,14 @@ type Screen =
   | 'items'
   | 'locations'
   | 'files'
-  | 'profile';
+  | 'profile'
+  | 'order-history'
+  | 'order-details'
+  | 'order-debug'
+  | 'address-management'
+  | 'address-form'
+  | 'checkout'
+  | 'address-selector';
 
 interface NavigationData {
   productId?: string;
@@ -72,6 +86,10 @@ export default function Page() {
   const [itemStockItem, setItemStockItem] = useState<Item | null>(null); // Track item being managed in stock screen
   const [optionSetData, setOptionSetData] = useState<{id?: string, name?: string}>({});
   const [navigationData, setNavigationData] = useState<NavigationData | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
+  const [checkoutAddress, setCheckoutAddress] = useState<any | null>(null);
+  const [showAddressSelector, setShowAddressSelector] = useState(false);
 
   // Bottom navigation state
   const [activeBottomTab, setActiveBottomTab] = useState<BottomTabScreen>('home');
@@ -368,6 +386,7 @@ export default function Page() {
       case 'cart':
         return <CartScreen
           onClose={() => handleNavigate('products')}
+          onCheckout={() => handleNavigate('checkout')}
         />;
       case 'options':
         return <Options
@@ -412,7 +431,80 @@ export default function Page() {
           onClose={() => handleNavigate('products')}
         />;
       case 'profile':
-        return <ProfileScreen onClose={() => handleNavigate('products')} />;
+        return <ProfileScreen
+          onClose={() => handleNavigate('products')}
+          onNavigateToOrderHistory={() => handleNavigate('order-debug')}
+          onNavigateToAddresses={() => handleNavigate('address-management')}
+        />;
+      case 'order-history':
+        return <OrderHistoryScreen
+          onClose={() => handleNavigate('profile')}
+          onOrderSelect={(order) => {
+            setSelectedOrder(order);
+            handleNavigate('order-details');
+          }}
+        />;
+      case 'order-details':
+        return selectedOrder ? (
+          <OrderDetails
+            order={selectedOrder}
+            onClose={() => handleNavigate('order-history')}
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center">
+            <Text>Order not found</Text>
+          </View>
+        );
+      case 'order-debug':
+        return <OrderHistoryDebug onClose={() => handleNavigate('profile')} />;
+      case 'address-management':
+        return <AddressManagementScreen
+          onClose={() => handleNavigate('profile')}
+          onAddAddress={() => {
+            setSelectedAddress(null);
+            handleNavigate('address-form');
+          }}
+          onEditAddress={(address) => {
+            setSelectedAddress(address);
+            handleNavigate('address-form');
+          }}
+        />;
+      case 'address-form':
+        return <AddressForm
+          onClose={() => handleNavigate('address-management')}
+          onSave={() => handleNavigate('address-management')}
+          address={selectedAddress}
+          isEditing={!!selectedAddress}
+        />;
+      case 'checkout':
+        return (
+          <>
+            <CheckoutScreen
+              onClose={() => handleNavigate('cart')}
+              onSuccess={(orderId) => {
+                handleNavigate('products');
+                // Could navigate to order confirmation screen here
+              }}
+              onAddressSelect={() => setShowAddressSelector(true)}
+              selectedAddress={checkoutAddress}
+              onAddressChange={setCheckoutAddress}
+            />
+            <AddressSelector
+              visible={showAddressSelector}
+              onClose={() => setShowAddressSelector(false)}
+              onSelectAddress={(address) => {
+                setCheckoutAddress(address);
+                setShowAddressSelector(false);
+              }}
+              onAddNewAddress={() => {
+                setShowAddressSelector(false);
+                setSelectedAddress(null);
+                handleNavigate('address-form');
+              }}
+              selectedAddress={checkoutAddress}
+            />
+          </>
+        );
       // All other cases default to products screen
       default:
         return <ProductsScreen

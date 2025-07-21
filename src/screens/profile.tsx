@@ -6,14 +6,21 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../lib/auth-context';
 import { r2Service } from '../lib/r2-service';
+import { db, formatCurrency } from '../lib/instant';
+import { orderHistoryService } from '../services/order-history-service';
+import { userCustomerService } from '../services/user-customer-service';
+import { useStore } from '../lib/store-context';
 
 interface ProfileScreenProps {
   onClose?: () => void;
+  onNavigateToOrderHistory?: () => void;
+  onNavigateToAddresses?: () => void;
 }
 
-export default function ProfileScreen({ onClose }: ProfileScreenProps) {
+export default function ProfileScreen({ onClose, onNavigateToOrderHistory, onNavigateToAddresses }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
-  const { user, peopleaProfile, createPeopleaProfile, updatePeopleaProfile, signOut } = useAuth();
+  const { user, peopleaProfile, createPeopleaProfile, updatePeopleaProfile, signOut, linkUserToCustomer } = useAuth();
+  const { currentStore } = useStore();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +33,74 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
     bio: '',
     profileImage: '',
   });
+
+  // Order statistics state
+  const [orderStats, setOrderStats] = useState({
+    totalOrders: 0,
+    totalSpent: 0,
+    recentOrders: [] as any[]
+  });
+
+  // Address statistics state
+  const [addressStats, setAddressStats] = useState({
+    totalAddresses: 0,
+    defaultAddress: null as any,
+    recentAddresses: [] as any[]
+  });
+
+  // Load order statistics
+  useEffect(() => {
+    const loadOrderStats = async () => {
+      if (!user?.email || !currentStore?.id) return;
+
+      try {
+        const summaryResult = await orderHistoryService.getUserOrderSummary(user.email, currentStore.id);
+        const recentResult = await orderHistoryService.getRecentUserOrders(user.email, currentStore.id, 3);
+
+        if (summaryResult.success && summaryResult.summary) {
+          setOrderStats({
+            totalOrders: summaryResult.summary.totalOrders,
+            totalSpent: summaryResult.summary.totalSpent,
+            recentOrders: recentResult.success ? (recentResult.orders || []) : []
+          });
+        }
+      } catch (error) {
+        console.error('Error loading order stats:', error);
+      }
+    };
+
+    loadOrderStats();
+  }, [user?.email, currentStore?.id]);
+
+  // Load address statistics and link user to customer
+  useEffect(() => {
+    const loadAddressStats = async () => {
+      if (!user?.email || !currentStore?.id) return;
+
+      try {
+        // First ensure user is linked to customer with store context
+        await linkUserToCustomer(currentStore.id);
+
+        // Get customer record to access addresses
+        const customer = await userCustomerService.findCustomerByEmail(user.email, currentStore.id);
+
+        if (customer) {
+          const addresses = customer.addresses || [];
+          const defaultAddress = customer.defaultAddress;
+
+          setAddressStats({
+            totalAddresses: addresses.length,
+            defaultAddress: defaultAddress,
+            recentAddresses: addresses.slice(0, 2) // Show 2 most recent
+          });
+        }
+      } catch (error) {
+        console.error('Error loading address stats:', error);
+      }
+    };
+
+    loadAddressStats();
+  }, [user?.email, currentStore?.id]);
 
   // Initialize form data when profile loads
   useEffect(() => {
@@ -303,6 +378,106 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
                 </Text>
               )}
             </View>
+          </View>
+
+          {/* Order History Card */}
+          <View className="mt-8">
+            <Text className="text-lg font-semibold text-gray-900 mb-4">Order History</Text>
+            <TouchableOpacity
+              onPress={onNavigateToOrderHistory}
+              className="bg-white rounded-xl p-6 border border-gray-200"
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-4">
+                    <Feather name="shopping-bag" size={20} color="#3B82F6" />
+                  </View>
+                  <View>
+                    <Text className="text-base font-medium text-gray-900">
+                      {orderStats.totalOrders} Orders
+                    </Text>
+                    <Text className="text-sm text-gray-500">
+                      Total spent: {formatCurrency(orderStats.totalSpent)}
+                    </Text>
+                  </View>
+                </View>
+                <Feather name="chevron-right" size={20} color="#9CA3AF" />
+              </View>
+
+              {orderStats.recentOrders.length > 0 ? (
+                <View>
+                  <Text className="text-sm font-medium text-gray-700 mb-2">Recent Orders</Text>
+                  {orderStats.recentOrders.map((order, index) => (
+                    <View key={order.id} className="flex-row items-center justify-between py-2">
+                      <View>
+                        <Text className="text-sm text-gray-900">#{order.orderNumber}</Text>
+                        <Text className="text-xs text-gray-500">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      <Text className="text-sm font-medium text-gray-900">
+                        {formatCurrency(order.total)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View className="py-4">
+                  <Text className="text-sm text-gray-500 text-center">
+                    No orders yet. Start shopping to see your order history here.
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Address Management Card */}
+          <View className="mt-8">
+            <Text className="text-lg font-semibold text-gray-900 mb-4">Delivery Addresses</Text>
+            <TouchableOpacity
+              onPress={onNavigateToAddresses}
+              className="bg-white rounded-xl p-6 border border-gray-200"
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-4">
+                    <Feather name="map-pin" size={20} color="#10B981" />
+                  </View>
+                  <View>
+                    <Text className="text-base font-medium text-gray-900">
+                      {addressStats.totalAddresses} Address{addressStats.totalAddresses !== 1 ? 'es' : ''}
+                    </Text>
+                    <Text className="text-sm text-gray-500">
+                      {addressStats.defaultAddress ? 'Default address set' : 'No default address'}
+                    </Text>
+                  </View>
+                </View>
+                <Feather name="chevron-right" size={20} color="#9CA3AF" />
+              </View>
+
+              {addressStats.defaultAddress ? (
+                <View>
+                  <Text className="text-sm font-medium text-gray-700 mb-2">Default Address</Text>
+                  <View className="bg-gray-50 rounded-lg p-3">
+                    <Text className="text-sm text-gray-900 font-medium">
+                      {addressStats.defaultAddress.firstName} {addressStats.defaultAddress.lastName}
+                    </Text>
+                    <Text className="text-sm text-gray-600">
+                      {addressStats.defaultAddress.address1}
+                    </Text>
+                    <Text className="text-sm text-gray-600">
+                      {addressStats.defaultAddress.city}, {addressStats.defaultAddress.province} {addressStats.defaultAddress.zip}
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <View className="py-4">
+                  <Text className="text-sm text-gray-500 text-center">
+                    Add your delivery addresses for faster checkout.
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
 
           {/* Sign Out Button */}

@@ -8,9 +8,10 @@ import R2Image from './ui/r2-image';
 
 interface CartScreenProps {
   onClose?: () => void;
+  onCheckout?: () => void;
 }
 
-export default function CartScreen({ onClose }: CartScreenProps) {
+export default function CartScreen({ onClose, onCheckout }: CartScreenProps) {
   const insets = useSafeAreaInsets();
   const { items: cartItems, totals, updateQuantity, removeItem, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
@@ -55,16 +56,8 @@ export default function CartScreen({ onClose }: CartScreenProps) {
       return;
     }
 
-    setIsLoading(true);
-    // Simulate checkout process
-    setTimeout(() => {
-      setIsLoading(false);
-      Alert.alert(
-        'Checkout Complete',
-        'Your order has been placed successfully!',
-        [{ text: 'OK', onPress: () => clearCart() }]
-      );
-    }, 2000);
+    // Navigate to checkout screen
+    onCheckout?.();
   };
 
   const renderCartItem = (item: any) => (
@@ -218,13 +211,10 @@ export default function CartScreen({ onClose }: CartScreenProps) {
 
             <TouchableOpacity
               onPress={handleCheckout}
-              disabled={isLoading}
-              className={`py-4 rounded-lg items-center ${
-                isLoading ? 'bg-gray-400' : 'bg-blue-600'
-              }`}
+              className="py-4 rounded-lg items-center bg-blue-600"
             >
               <Text className="text-white font-semibold text-lg">
-                {isLoading ? 'Processing...' : 'Checkout'}
+                Checkout
               </Text>
             </TouchableOpacity>
           </View>

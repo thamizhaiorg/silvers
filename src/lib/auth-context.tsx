@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User } from '@instantdb/react-native';
 import { db } from './instant';
 import { id } from '@instantdb/react-native';
+import { userCustomerService, Customer } from '../services/user-customer-service';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +12,8 @@ interface AuthContextType {
   peopleaProfile: PeopleaProfile | null;
   createPeopleaProfile: (data: Partial<PeopleaProfile>) => Promise<void>;
   updatePeopleaProfile: (data: Partial<PeopleaProfile>) => Promise<void>;
+  customerProfile: Customer | null;
+  linkUserToCustomer: (storeId: string) => Promise<void>;
 }
 
 interface PeopleaProfile {
@@ -33,6 +36,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const { isLoading, user, error } = db.useAuth();
   const [peopleaProfile, setPeopleaProfile] = useState<any | null>(null);
+  const [customerProfile, setCustomerProfile] = useState<Customer | null>(null);
 
   // Query peoplea profile when user is authenticated
   const { data: peopleaData } = db.useQuery(
@@ -55,6 +59,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setPeopleaProfile(null);
     }
   }, [peopleaData]);
+
+  // Note: linkUserToCustomer is now called manually with storeId from components
+
+  const linkUserToCustomer = async (storeId: string) => {
+    if (!user || !user.email || !storeId) return;
+
+    try {
+      const result = await userCustomerService.findOrCreateCustomerForUser(user, {
+        name: peopleaProfile?.name,
+        phone: peopleaProfile?.phone
+      }, storeId);
+
+      if (result.success && result.customer) {
+        setCustomerProfile(result.customer);
+      }
+    } catch (error) {
+      console.error('Error linking user to customer:', error);
+    }
+  };
 
   const signOut = async () => {
     try {
@@ -123,6 +146,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     peopleaProfile,
     createPeopleaProfile,
     updatePeopleaProfile,
+    customerProfile,
+    linkUserToCustomer,
   };
 
   return (

@@ -47,6 +47,7 @@ const _schema = i.schema({
       updatedAt: i.date(),
     }),
     customers: i.entity({
+      storeId: i.string().indexed(), // Required field for store association
       addresses: i.json().optional(),
       createdAt: i.date().indexed(),
       defaultAddress: i.json().optional(),
@@ -703,6 +704,18 @@ const _schema = i.schema({
       },
       reverse: {
         on: "files",
+        has: "one",
+        label: "store",
+      },
+    },
+    storeCustomers: {
+      forward: {
+        on: "store",
+        has: "many",
+        label: "customers",
+      },
+      reverse: {
+        on: "customers",
         has: "one",
         label: "store",
       },

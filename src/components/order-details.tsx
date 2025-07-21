@@ -170,6 +170,41 @@ export default function OrderDetails({ order, onClose }: OrderDetailsProps) {
           </View>
         </View>
 
+        {/* Delivery Address */}
+        {order.shippingAddress && (
+          <View className="bg-white mx-6 mt-4 rounded-2xl p-6">
+            <Text className="text-lg font-semibold text-gray-900 mb-4">Delivery Address</Text>
+            <View className="flex-row items-start">
+              <View className="w-12 h-12 bg-green-100 rounded-xl items-center justify-center mr-4">
+                <Feather name="map-pin" size={24} color="#10B981" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-900 mb-1">
+                  {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                </Text>
+                {order.shippingAddress.company && (
+                  <Text className="text-sm text-gray-600 mb-1">
+                    {order.shippingAddress.company}
+                  </Text>
+                )}
+                <Text className="text-sm text-gray-700 leading-5">
+                  {order.shippingAddress.address1}
+                  {order.shippingAddress.address2 && `, ${order.shippingAddress.address2}`}
+                  {'\n'}
+                  {order.shippingAddress.city}, {order.shippingAddress.province} {order.shippingAddress.zip}
+                  {'\n'}
+                  {order.shippingAddress.country}
+                </Text>
+                {order.shippingAddress.phone && (
+                  <Text className="text-sm text-gray-600 mt-2">
+                    {order.shippingAddress.phone}
+                  </Text>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Order Items */}
         <View className="bg-white mx-6 mt-4 rounded-2xl p-6">
           <Text className="text-lg font-semibold text-gray-900 mb-4">
