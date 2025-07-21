@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
 
-import { userCustomerService } from '../services/user-customer-service';
-import { Address } from '../types/database';
+import { addressService, Address } from '../services/address-service';
+import { db } from '../lib/instant';
 
 interface AddressManagementScreenProps {
   onClose: () => void;
@@ -20,65 +20,43 @@ export default function AddressManagementScreen({
 }: AddressManagementScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [addresses, setAddresses] = useState<(Address & { id: string })[]>([]);
-  const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadAddresses = async () => {
-    if (!user?.email) return;
-
-    try {
-      const customer = await userCustomerService.findCustomerByEmail(user.email);
-
-      if (customer) {
-        const customerAddresses = customer.addresses || [];
-        const addressesWithIds = customerAddresses.map((addr, index) => ({
-          ...addr,
-          id: `addr_${index}` // Generate temporary IDs for addresses
-        }));
-
-        setAddresses(addressesWithIds);
-
-        // Find default address
-        if (customer.defaultAddress) {
-          const defaultIndex = customerAddresses.findIndex(addr =>
-            JSON.stringify(addr) === JSON.stringify(customer.defaultAddress)
-          );
-          setDefaultAddressId(defaultIndex >= 0 ? `addr_${defaultIndex}` : null);
+  // Use InstantDB's reactive query for real-time updates
+  const { data, isLoading, error } = db.useQuery(
+    user?.id ? {
+      addresses: {
+        $: {
+          where: {
+            userId: user.id
+          }
         }
       }
-    } catch (error) {
-      console.error('Error loading addresses:', error);
-      Alert.alert('Error', 'Failed to load addresses');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    } : null
+  );
+
+  const addresses = data?.addresses || [];
+  const defaultAddress = addresses.find(addr => addr.isDefault);
+  const defaultAddressId = defaultAddress?.id || null;
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadAddresses();
-    setRefreshing(false);
+    // InstantDB automatically refreshes, but we can trigger a manual refresh if needed
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
   const handleSetDefault = async (addressId: string) => {
-    if (!user?.email) return;
+    if (!user?.id) return;
 
     try {
-      const address = addresses.find(addr => addr.id === addressId);
-      if (!address) return;
+      const result = await addressService.setDefaultAddress(addressId);
 
-      const customer = await userCustomerService.findCustomerByEmail(user.email);
-      if (!customer) return;
-
-      // Update customer with new default address
-      await userCustomerService.updateCustomerProfile(customer.id, {
-        defaultAddress: address
-      });
-
-      setDefaultAddressId(addressId);
-      Alert.alert('Success', 'Default address updated');
+      if (result.success) {
+        Alert.alert('Success', 'Default address updated');
+        // InstantDB will automatically update the UI via reactive query
+      } else {
+        Alert.alert('Error', result.error || 'Failed to set default address');
+      }
     } catch (error) {
       console.error('Error setting default address:', error);
       Alert.alert('Error', 'Failed to set default address');
@@ -86,7 +64,7 @@ export default function AddressManagementScreen({
   };
 
   const handleDeleteAddress = async (addressId: string) => {
-    if (!user?.email) return;
+    if (!user?.id) return;
 
     Alert.alert(
       'Delete Address',
@@ -98,26 +76,14 @@ export default function AddressManagementScreen({
           style: 'destructive',
           onPress: async () => {
             try {
-              const customer = await userCustomerService.findCustomerByEmail(user.email);
-              if (!customer) return;
+              const result = await addressService.deleteAddress(addressId);
 
-              const addressIndex = parseInt(addressId.replace('addr_', ''));
-              const updatedAddresses = [...(customer.addresses || [])];
-              updatedAddresses.splice(addressIndex, 1);
-
-              // If deleting default address, clear default
-              let newDefaultAddress = customer.defaultAddress;
-              if (defaultAddressId === addressId) {
-                newDefaultAddress = undefined;
+              if (result.success) {
+                Alert.alert('Success', 'Address deleted');
+                // InstantDB will automatically update the UI via reactive query
+              } else {
+                Alert.alert('Error', result.error || 'Failed to delete address');
               }
-
-              await userCustomerService.updateCustomerProfile(customer.id, {
-                addresses: updatedAddresses,
-                defaultAddress: newDefaultAddress
-              });
-
-              await loadAddresses();
-              Alert.alert('Success', 'Address deleted');
             } catch (error) {
               console.error('Error deleting address:', error);
               Alert.alert('Error', 'Failed to delete address');
@@ -130,18 +96,15 @@ export default function AddressManagementScreen({
 
   const formatAddress = (address: Address) => {
     const parts = [
-      address.address1,
-      address.address2,
-      `${address.city}, ${address.province} ${address.zip}`,
+      address.street,
+      `${address.city}, ${address.state} ${address.zipCode}`,
       address.country
     ].filter(Boolean);
-    
+
     return parts.join('\n');
   };
 
-  useEffect(() => {
-    loadAddresses();
-  }, [user?.email]);
+
 
   return (
     <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>

@@ -13,6 +13,19 @@ const _schema = i.schema({
     $users: i.entity({
       email: i.string().unique().indexed().optional(),
     }),
+    addresses: i.entity({
+      userId: i.string().indexed(),
+      name: i.string(),
+      street: i.string(),
+      city: i.string(),
+      state: i.string(),
+      zipCode: i.string(),
+      country: i.string().optional(),
+      phone: i.string().optional(),
+      isDefault: i.boolean().optional(),
+      createdAt: i.date(),
+      updatedAt: i.date().optional(),
+    }),
     // blocks entity removed - storefront related
     brands: i.entity({
       name: i.string().unique().indexed(),
@@ -679,6 +692,7 @@ const _schema = i.schema({
         label: "orders",
       },
     },
+
     // audit system relationships removed - entities removed
     // cartSession link removed - sessions entity removed
   },

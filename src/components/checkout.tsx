@@ -6,9 +6,9 @@ import { useAuth } from '../lib/auth-context';
 import { useCart } from '../lib/cart-context';
 
 import { userCustomerService } from '../services/user-customer-service';
+import { addressService, Address } from '../services/address-service';
 import { formatCurrency, db } from '../lib/instant';
 import { id } from '@instantdb/react-native';
-import { Address } from '../types/database';
 
 interface CheckoutScreenProps {
   onClose: () => void;
@@ -30,36 +30,53 @@ export default function CheckoutScreen({
   const { items: cartItems, totals, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [customer, setCustomer] = useState<any>(null);
 
-  // Load user addresses
-  useEffect(() => {
-    const loadAddresses = async () => {
-      if (!user?.email) return;
-
-      try {
-        const customerResult = await userCustomerService.findOrCreateCustomerForUser(user, undefined);
-        
-        if (customerResult.success && customerResult.customer) {
-          setCustomer(customerResult.customer);
-          const customerAddresses = customerResult.customer.addresses || [];
-          setAddresses(customerAddresses);
-          
-          // Auto-select default address if available
-          if (customerResult.customer.defaultAddress) {
-            setSelectedAddress(customerResult.customer.defaultAddress);
-          } else if (customerAddresses.length > 0) {
-            setSelectedAddress(customerAddresses[0]);
+  // Use InstantDB's reactive query for addresses
+  const { data: addressData } = db.useQuery(
+    user?.id ? {
+      addresses: {
+        $: {
+          where: {
+            userId: user.id
           }
         }
+      }
+    } : null
+  );
+
+  const addresses = addressData?.addresses || [];
+
+  // Load customer info and auto-select default address
+  useEffect(() => {
+    const loadCustomerAndSelectAddress = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Load customer info
+        const customerResult = await userCustomerService.findOrCreateCustomerForUser(user, undefined);
+        if (customerResult.success && customerResult.customer) {
+          setCustomer(customerResult.customer);
+        }
       } catch (error) {
-        console.error('Error loading addresses:', error);
+        console.error('Error loading customer:', error);
       }
     };
 
-    loadAddresses();
-  }, [user?.email]);
+    loadCustomerAndSelectAddress();
+  }, [user?.id]);
+
+  // Auto-select default address when addresses change
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedAddress) {
+      const defaultAddress = addresses.find(addr => addr.isDefault);
+      if (defaultAddress) {
+        setSelectedAddress(defaultAddress);
+      } else {
+        setSelectedAddress(addresses[0]);
+      }
+    }
+  }, [addresses, selectedAddress]);
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
@@ -86,7 +103,7 @@ export default function CheckoutScreen({
         referenceId: orderId,
         createdAt: new Date(),
         customerId: customer?.id,
-        customerName: customer?.name || `${selectedAddress.firstName} ${selectedAddress.lastName}`,
+        customerName: customer?.name || selectedAddress.name,
         customerEmail: user?.email,
         customerPhone: selectedAddress.phone || customer?.phone,
         status: 'pending',
@@ -155,7 +172,7 @@ export default function CheckoutScreen({
   };
 
   const formatAddress = (address: Address) => {
-    return `${address.address1}${address.address2 ? ', ' + address.address2 : ''}, ${address.city}, ${address.province} ${address.zip}`;
+    return `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`;
   };
 
   return (
@@ -187,11 +204,8 @@ export default function CheckoutScreen({
             {selectedAddress ? (
               <View className="bg-gray-50 rounded-lg p-3">
                 <Text className="text-base font-medium text-gray-900 mb-1">
-                  {selectedAddress.firstName} {selectedAddress.lastName}
+                  {selectedAddress.name}
                 </Text>
-                {selectedAddress.company && (
-                  <Text className="text-sm text-gray-600 mb-1">{selectedAddress.company}</Text>
-                )}
                 <Text className="text-sm text-gray-700">
                   {formatAddress(selectedAddress)}
                 </Text>

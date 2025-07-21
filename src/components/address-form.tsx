@@ -3,9 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvo
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-
-import { userCustomerService } from '../services/user-customer-service';
-import { Address } from '../types/database';
+import { addressService, CreateAddressData, Address } from '../services/address-service';
 
 interface AddressFormProps {
   onClose: () => void;
@@ -20,33 +18,29 @@ export default function AddressForm({ onClose, onSave, address, isEditing = fals
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [formData, setFormData] = useState<Address>({
-    firstName: '',
-    lastName: '',
-    company: '',
-    address1: '',
-    address2: '',
+  const [formData, setFormData] = useState({
+    name: '',
+    street: '',
     city: '',
-    province: '',
+    state: '',
+    zipCode: '',
     country: 'United States',
-    zip: '',
-    phone: ''
+    phone: '',
+    isDefault: false
   });
 
   // Initialize form with existing address data
   useEffect(() => {
     if (address) {
       setFormData({
-        firstName: address.firstName || '',
-        lastName: address.lastName || '',
-        company: address.company || '',
-        address1: address.address1 || '',
-        address2: address.address2 || '',
+        name: address.name || '',
+        street: address.street || '',
         city: address.city || '',
-        province: address.province || '',
+        state: address.state || '',
+        zipCode: address.zipCode || '',
         country: address.country || 'United States',
-        zip: address.zip || '',
-        phone: address.phone || ''
+        phone: address.phone || '',
+        isDefault: address.isDefault || false
       });
     }
   }, [address]);
@@ -54,28 +48,24 @@ export default function AddressForm({ onClose, onSave, address, isEditing = fals
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName?.trim()) {
-      newErrors.firstName = 'First name is required';
+    if (!formData.name?.trim()) {
+      newErrors.name = 'Full name is required';
     }
 
-    if (!formData.lastName?.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-
-    if (!formData.address1?.trim()) {
-      newErrors.address1 = 'Address is required';
+    if (!formData.street?.trim()) {
+      newErrors.street = 'Street address is required';
     }
 
     if (!formData.city?.trim()) {
       newErrors.city = 'City is required';
     }
 
-    if (!formData.province?.trim()) {
-      newErrors.province = 'State/Province is required';
+    if (!formData.state?.trim()) {
+      newErrors.state = 'State is required';
     }
 
-    if (!formData.zip?.trim()) {
-      newErrors.zip = 'ZIP/Postal code is required';
+    if (!formData.zipCode?.trim()) {
+      newErrors.zipCode = 'ZIP code is required';
     }
 
     if (!formData.country?.trim()) {
@@ -91,13 +81,21 @@ export default function AddressForm({ onClose, onSave, address, isEditing = fals
     return Object.keys(newErrors).length === 0;
   };
 
+  const updateField = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
   const handleSave = async () => {
     if (!validateForm()) {
       Alert.alert('Validation Error', 'Please fix the errors and try again');
       return;
     }
 
-    if (!user?.email) {
+    if (!user?.id) {
       Alert.alert('Error', 'User not found');
       return;
     }
@@ -105,50 +103,41 @@ export default function AddressForm({ onClose, onSave, address, isEditing = fals
     setIsLoading(true);
 
     try {
-      const customer = await userCustomerService.findOrCreateCustomerForUser(user, undefined);
-      
-      if (!customer.success || !customer.customer) {
-        Alert.alert('Error', 'Failed to find customer record');
-        return;
-      }
+      const addressData: CreateAddressData = {
+        name: formData.name,
+        street: formData.street,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        phone: formData.phone,
+        isDefault: formData.isDefault,
+      };
 
-      const existingAddresses = customer.customer.addresses || [];
-      let updatedAddresses: Address[];
-
+      let result;
       if (isEditing && address?.id) {
         // Update existing address
-        const addressIndex = parseInt(address.id.replace('addr_', ''));
-        updatedAddresses = [...existingAddresses];
-        updatedAddresses[addressIndex] = formData;
+        result = await addressService.updateAddress(address.id, addressData);
       } else {
-        // Add new address
-        updatedAddresses = [...existingAddresses, formData];
+        // Create new address
+        result = await addressService.createAddress(user.id, addressData);
       }
 
-      // Update customer with new addresses
-      await userCustomerService.updateCustomerProfile(customer.customer.id, {
-        addresses: updatedAddresses
-      });
-
-      Alert.alert(
-        'Success', 
-        isEditing ? 'Address updated successfully' : 'Address added successfully',
-        [{ text: 'OK', onPress: () => { onSave?.(); onClose(); } }]
-      );
+      if (result.success) {
+        Alert.alert(
+          'Success',
+          isEditing ? 'Address updated successfully' : 'Address added successfully',
+          [{ text: 'OK', onPress: () => { onSave?.(); onClose(); } }]
+        );
+      } else {
+        Alert.alert('Error', result.error || 'Failed to save address');
+      }
 
     } catch (error) {
       console.error('Error saving address:', error);
       Alert.alert('Error', 'Failed to save address');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const updateField = (field: keyof Address, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -222,44 +211,49 @@ export default function AddressForm({ onClose, onSave, address, isEditing = fals
         <View className="px-4 py-6">
           {/* Personal Information */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-gray-900 mb-4">Personal Information</Text>
-            
-            <View className="flex-row gap-3">
-              <View className="flex-1">
-                {renderInput('firstName', 'First Name', 'John', { required: true })}
-              </View>
-              <View className="flex-1">
-                {renderInput('lastName', 'Last Name', 'Doe', { required: true })}
-              </View>
-            </View>
+            <Text className="text-lg font-semibold text-gray-900 mb-4">Contact Information</Text>
 
-            {renderInput('company', 'Company', 'Company name (optional)')}
+            {renderInput('name', 'Full Name', 'John Doe', { required: true })}
             {renderInput('phone', 'Phone', '+1 (555) 123-4567', { keyboardType: 'phone-pad' })}
           </View>
 
           {/* Address Information */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-gray-900 mb-4">Address Information</Text>
-            
-            {renderInput('address1', 'Address Line 1', '123 Main Street', { required: true })}
-            {renderInput('address2', 'Address Line 2', 'Apartment, suite, etc. (optional)')}
-            
+
+            {renderInput('street', 'Street Address', '123 Main Street', { required: true })}
+
             <View className="flex-row gap-3">
               <View className="flex-1">
                 {renderInput('city', 'City', 'New York', { required: true })}
               </View>
               <View className="flex-1">
-                {renderInput('province', 'State/Province', 'NY', { required: true, autoCapitalize: 'characters' })}
+                {renderInput('state', 'State', 'NY', { required: true, autoCapitalize: 'characters' })}
               </View>
             </View>
 
             <View className="flex-row gap-3">
               <View className="flex-1">
-                {renderInput('zip', 'ZIP/Postal Code', '10001', { required: true, autoCapitalize: 'characters' })}
+                {renderInput('zipCode', 'ZIP Code', '10001', { required: true, autoCapitalize: 'characters' })}
               </View>
               <View className="flex-1">
                 {renderInput('country', 'Country', 'United States', { required: true })}
               </View>
+            </View>
+
+            {/* Default Address Toggle */}
+            <View className="mt-4">
+              <TouchableOpacity
+                onPress={() => updateField('isDefault', !formData.isDefault)}
+                className="flex-row items-center"
+              >
+                <View className={`w-5 h-5 rounded border-2 mr-3 ${formData.isDefault ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
+                  {formData.isDefault && (
+                    <Feather name="check" size={12} color="white" style={{ alignSelf: 'center', marginTop: 1 }} />
+                  )}
+                </View>
+                <Text className="text-base text-gray-700">Set as default address</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

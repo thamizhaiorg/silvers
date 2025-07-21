@@ -3,9 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, Modal, Alert } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-
-import { userCustomerService } from '../services/user-customer-service';
-import { Address } from '../types/database';
+import { addressService, Address } from '../services/address-service';
+import { db } from '../lib/instant';
 
 interface AddressSelectorProps {
   visible: boolean;
@@ -24,32 +23,21 @@ export default function AddressSelector({
 }: AddressSelectorProps) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const loadAddresses = async () => {
-    if (!user?.email) return;
-
-    try {
-      const customer = await userCustomerService.findCustomerByEmail(user.email);
-      
-      if (customer) {
-        const customerAddresses = customer.addresses || [];
-        setAddresses(customerAddresses);
+  // Use InstantDB's reactive query for addresses
+  const { data, isLoading } = db.useQuery(
+    user?.id && visible ? {
+      addresses: {
+        $: {
+          where: {
+            userId: user.id
+          }
+        }
       }
-    } catch (error) {
-      console.error('Error loading addresses:', error);
-      Alert.alert('Error', 'Failed to load addresses');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    } : null
+  );
 
-  useEffect(() => {
-    if (visible) {
-      loadAddresses();
-    }
-  }, [visible, user?.email, currentStore?.id]);
+  const addresses = data?.addresses || [];
 
   const formatAddress = (address: Address) => {
     const parts = [
