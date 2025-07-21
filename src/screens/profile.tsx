@@ -8,7 +8,7 @@ import { useAuth } from '../lib/auth-context';
 import { r2Service } from '../lib/r2-service';
 
 interface ProfileScreenProps {
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export default function ProfileScreen({ onClose }: ProfileScreenProps) {
@@ -180,10 +180,14 @@ export default function ProfileScreen({ onClose }: ProfileScreenProps) {
     >
       {/* Header */}
       <View className="px-4 h-16 flex-row items-center justify-between bg-white border-b border-gray-200">
-        <TouchableOpacity onPress={onClose} className="flex-row items-center">
-          <Feather name="arrow-left" size={24} color="#374151" />
-          <Text className="text-lg font-medium text-gray-900 ml-2">Profile</Text>
-        </TouchableOpacity>
+        {onClose ? (
+          <TouchableOpacity onPress={onClose} className="flex-row items-center">
+            <Feather name="arrow-left" size={24} color="#374151" />
+            <Text className="text-lg font-medium text-gray-900 ml-2">Profile</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text className="text-lg font-medium text-gray-900">Profile</Text>
+        )}
         
         {isEditing ? (
           <View className="flex-row gap-3">

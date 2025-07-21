@@ -3,8 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, Modal, Animat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
-import ProductFormScreen from './prod-form';
-import InventoryAdjustmentScreen from './inventory';
+import ProductDetails from './product-details';
 import { useStore } from '../lib/store-context';
 import { log, trackError, PerformanceMonitor } from '../lib/logger';
 import { LoadingError, EmptyState } from './ui/error-boundary';
@@ -13,14 +12,12 @@ import R2Image from './ui/r2-image';
 
 interface ProductsScreenProps {
   isGridView?: boolean;
-  onProductFormOpen?: (product?: any) => void;
-  onProductFormClose?: () => void;
   onClose?: () => void;
 }
 
-type FilterStatus = 'All' | 'Active' | 'Draft';
+type FilterCategory = 'All' | string; // 'All' or category ID
 
-// Memoized product item component for better performance
+// Memoized product item component for better performance - Card design
 const ProductItem = React.memo(({
   product,
   isSelected,
@@ -34,102 +31,79 @@ const ProductItem = React.memo(({
   onPress: () => void;
   onLongPress: () => void;
 }) => {
-  const getProductStatus = (product: any) => {
-    // Simple logic: false = Draft, everything else = Active
-    return product.status === false ? 'Draft' : 'Active';
-  };
-
-  const getVariantCount = (product: any) => {
-    return product.item?.length || 0;
-  };
-
   return (
     <TouchableOpacity
       onPress={onPress}
       onLongPress={onLongPress}
-      className={`px-4 py-4 ${
-        isSelected ? 'bg-blue-50' : 'bg-white'
+      className={`m-2 rounded-lg overflow-hidden ${
+        isSelected ? 'bg-blue-50 border-2 border-blue-500' : 'bg-white border border-gray-200'
       }`}
       style={{
-        opacity: isMultiSelectMode && !isSelected ? 0.6 : 1
+        width: '45%', // Two cards per row with margin
+        opacity: isMultiSelectMode && !isSelected ? 0.6 : 1,
       }}
     >
-      <View className="flex-row items-center">
-        {/* Multi-select checkbox */}
-        {isMultiSelectMode && (
-          <View className="mr-3">
-            <View className={`w-6 h-6 items-center justify-center ${
-              isSelected ? 'bg-blue-600' : 'bg-gray-300'
-            }`}>
-              {isSelected && (
-                <Feather name="check" size={14} color="white" />
-              )}
-            </View>
+      {/* Multi-select checkbox - positioned absolutely */}
+      {isMultiSelectMode && (
+        <View className="absolute top-2 right-2 z-10">
+          <View className={`w-6 h-6 rounded-full items-center justify-center ${
+            isSelected ? 'bg-blue-600' : 'bg-white border-2 border-gray-300'
+          }`}>
+            {isSelected && (
+              <Feather name="check" size={14} color="white" />
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Product Image - Square aspect ratio */}
+      <View className="w-full aspect-square bg-gray-100 overflow-hidden">
+        {product.image ? (
+          <R2Image
+            url={product.image}
+            style={{ width: '100%', height: '100%' }}
+            fallback={
+              <View className="w-full h-full bg-gray-100 items-center justify-center">
+                <Text className="text-4xl">📦</Text>
+              </View>
+            }
+          />
+        ) : (
+          <View className="w-full h-full bg-gray-100 items-center justify-center">
+            <Text className="text-4xl">📦</Text>
           </View>
         )}
+      </View>
 
-        {/* Product Image */}
-        <View className="w-12 h-12 bg-gray-200 mr-3 overflow-hidden">
-          {product.image ? (
-            <R2Image
-              url={product.image}
-              style={{ width: 48, height: 48 }}
-              fallback={
-                <View className="w-12 h-12 bg-gray-200 items-center justify-center">
-                  <Text className="text-lg">📦</Text>
-                </View>
-              }
-            />
-          ) : (
-            <View className="w-12 h-12 bg-gray-200 items-center justify-center">
-              <Text className="text-lg">📦</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Product Details */}
-        <View className="flex-1">
-          <Text className="text-base font-medium text-gray-900 mb-1">
-            {product.title || 'Untitled Product'}
-          </Text>
-          <Text className="text-sm text-gray-500">
-            {getVariantCount(product)} {getVariantCount(product) === 1 ? 'item' : 'items'} • {getProductStatus(product)}
-          </Text>
-        </View>
-
-        {/* Price */}
-        <View className="items-end">
-          <Text className="text-base font-semibold text-gray-900">
-            {product.price ? formatCurrency(product.price) : '$0.00'}
-          </Text>
-          {product.saleprice && product.saleprice < product.price && (
-            <Text className="text-sm text-red-600 line-through">
-              {formatCurrency(product.saleprice)}
-            </Text>
-          )}
-        </View>
+      {/* Product Title */}
+      <View className="p-3">
+        <Text
+          className="text-sm font-medium text-gray-900 text-center"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {product.title || 'Untitled Product'}
+        </Text>
       </View>
     </TouchableOpacity>
   );
 });
 
-export default function ProductsScreen({ isGridView = false, onProductFormOpen, onProductFormClose, onClose }: ProductsScreenProps) {
+export default function ProductsScreen({ isGridView = false, onClose }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
   const { currentStore } = useStore();
-  const [showForm, setShowForm] = useState(false);
-  const [showInventoryAdjustment, setShowInventoryAdjustment] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterStatus>('All');
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('All');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [showBottomDrawer, setShowBottomDrawer] = useState(false);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
   // Removed custom BackHandler logic to allow default navigation behavior
 
-  // Query products with their items filtered by current store
-  // Note: Relationship queries removed temporarily until relationships are properly established
+  // Query products with their items and categories filtered by current store
   const { isLoading, error, data } = db.useQuery(
     currentStore?.id ? {
       products: {
@@ -141,12 +115,21 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
             createdAt: 'desc' // Use consistent field naming
           }
         },
-        item: {} // Keep item relationship as it's working
+        item: {}, // Keep item relationship as it's working
+        category: {} // Include category relationship
+      },
+      categories: {
+        $: {
+          order: {
+            name: 'asc'
+          }
+        }
       }
     } : null // Don't query if no store selected
   );
 
   const products = data?.products || [];
+  const categories = data?.categories || [];
 
   // Log query errors
   if (error) {
@@ -155,7 +138,7 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
 
 
 
-  // Filter products based on search and status - memoized for performance
+  // Filter products based on search and category - memoized for performance
   const filteredProducts = useMemo(() => {
     return PerformanceMonitor.measure('filter-products', () => {
       const searchTerm = searchQuery.toLowerCase();
@@ -174,46 +157,31 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
           (product.description || '').toLowerCase().includes(searchTerm)
         );
 
-        // Status filter - Use new status field values
-        let matchesStatus = true;
-        if (activeFilter === 'Active') {
-          // Active: status is 'active' or not 'draft'
-          matchesStatus = product.status === 'active' || (product.status !== 'draft' && product.status !== false);
-        } else if (activeFilter === 'Draft') {
-          // Draft: status is 'draft' or explicitly false
-          matchesStatus = product.status === 'draft' || product.status === false;
+        // Category filter
+        let matchesCategory = true;
+        if (activeFilter !== 'All') {
+          // Filter by specific category ID
+          matchesCategory = product.categoryId === activeFilter;
         }
-        // 'All' filter shows everything (matchesStatus remains true)
+        // 'All' filter shows everything (matchesCategory remains true)
 
-        return matchesSearch && matchesStatus;
+        return matchesSearch && matchesCategory;
       });
     });
   }, [products, searchQuery, activeFilter]);
 
-  // Get product status for display
-  const getProductStatus = (product: any) => {
-    // Simple logic: false = Draft, everything else = Active
-    return product.status === false ? 'Draft' : 'Active';
-  };
 
 
 
-  const handleEdit = useCallback((product: any) => {
+
+  const handleViewDetails = useCallback((product: any) => {
     setEditingProduct(product);
-    setShowForm(true);
-    onProductFormOpen?.(product);
-  }, [onProductFormOpen]);
-
-  const handleInventoryAdjustment = useCallback((product: any) => {
-    setEditingProduct(product);
-    setShowInventoryAdjustment(true);
+    setShowDetails(true);
   }, []);
 
-  const handleAddNew = useCallback(() => {
-    setEditingProduct(null);
-    setShowForm(true);
-    onProductFormOpen?.(null);
-  }, [onProductFormOpen]);
+
+
+
 
   const handleLongPress = (product: any) => {
     if (!isMultiSelectMode) {
@@ -238,9 +206,9 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
         setShowBottomDrawer(false);
       }
     } else {
-      handleEdit(product);
+      handleViewDetails(product);
     }
-  }, [isMultiSelectMode, selectedProducts, handleEdit]);
+  }, [isMultiSelectMode, selectedProducts, handleViewDetails]);
 
   const handleDeleteSelected = () => {
     Alert.alert(
@@ -309,29 +277,14 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
     );
   }
 
-  // Show full-screen forms
-  if (showForm) {
+  // Show product details
+  if (showDetails && editingProduct) {
     return (
-      <ProductFormScreen
+      <ProductDetails
         product={editingProduct}
         onClose={() => {
-          setShowForm(false);
-          onProductFormClose?.();
-        }}
-        onSave={() => {
-          // Refresh will happen automatically due to real-time updates
-        }}
-      />
-    );
-  }
-
-  if (showInventoryAdjustment) {
-    return (
-      <InventoryAdjustmentScreen
-        product={editingProduct}
-        onClose={() => setShowInventoryAdjustment(false)}
-        onSave={() => {
-          // Refresh will happen automatically due to real-time updates
+          setShowDetails(false);
+          setEditingProduct(null);
         }}
       />
     );
@@ -410,49 +363,47 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
 
   return (
     <View className="flex-1 bg-white">
-      {/* Search Bar with top and bottom borders - NO spacing above */}
-      <View className="bg-white px-4 py-3">
+      {/* Search Bar - Clean design without add/filter buttons */}
+      <View className="bg-white px-4 py-3 border-b border-gray-100">
         <View className="flex-row items-center">
-          {/* Add Icon */}
-          <TouchableOpacity onPress={handleAddNew}>
-            <Feather name="plus" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
+          {/* Search Icon */}
+          <Feather name="search" size={20} color="#9CA3AF" />
 
           {/* Search Input */}
           <TextInput
-            placeholder="Search"
+            placeholder="Search products..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            className="flex-1 text-base text-gray-900 ml-3 mr-3"
+            className="flex-1 text-base text-gray-900 ml-3"
             placeholderTextColor="#9CA3AF"
           />
-
-          {/* Filter Icon - Only one icon needed */}
-          <TouchableOpacity onPress={() => setShowFilterModal(true)}>
-            <MaterialCommunityIcons name="sort-ascending" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Filter Tabs - Always visible */}
-      <View className="px-4 py-3 bg-white border-b border-gray-100">
-        <View className="flex-row">
-          {(['All', 'Active', 'Draft'] as FilterStatus[]).map((filter) => (
+      {/* Category Filter Tabs - Scrollable */}
+      <View className="bg-white border-b border-gray-100">
+        <FlatList
+          data={[{ id: 'All', name: 'All' }, ...categories]}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
+          renderItem={({ item }) => (
             <TouchableOpacity
-              key={filter}
-              onPress={() => setActiveFilter(filter)}
+              key={item.id}
+              onPress={() => setActiveFilter(item.id)}
               className={`mr-6 pb-2 ${
-                activeFilter === filter ? 'border-b-2 border-blue-600' : ''
+                activeFilter === item.id ? 'border-b-2 border-blue-600' : ''
               }`}
             >
-              <Text className={`text-base font-medium ${
-                activeFilter === filter ? 'text-blue-600' : 'text-gray-500'
+              <Text className={`text-base font-medium whitespace-nowrap ${
+                activeFilter === item.id ? 'text-blue-600' : 'text-gray-500'
               }`}>
-                {filter}
+                {item.name}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
+          )}
+        />
       </View>
 
 
@@ -466,24 +417,15 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
               </View>
               <Text className="text-lg font-medium text-gray-900 mb-2">
                 {searchQuery ? 'No products found' :
-                 activeFilter === 'Active' ? 'No active products' :
-                 activeFilter === 'Draft' ? 'No draft products' :
+                 activeFilter !== 'All' ? 'No products in this category' :
                  'No products yet'}
               </Text>
               <Text className="text-gray-500 text-center mb-6">
-                {searchQuery ? 'Try adjusting your search terms or filters' :
-                 activeFilter === 'Active' ? 'Products will appear here when they are published and available' :
-                 activeFilter === 'Draft' ? 'Products will appear here when they are saved as drafts' :
+                {searchQuery ? 'Try adjusting your search terms or category filter' :
+                 activeFilter !== 'All' ? 'Products will appear here when they are added to this category' :
                  'Start by adding your first product to the inventory'}
               </Text>
-              {(products.length === 0 || activeFilter === 'All') && (
-                <TouchableOpacity
-                  onPress={handleAddNew}
-                  className="bg-blue-600 px-6 py-3 rounded-lg"
-                >
-                  <Text className="text-white font-medium">Add Product</Text>
-                </TouchableOpacity>
-              )}
+
             </View>
           </View>
         ) : (
@@ -495,11 +437,9 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
             maxToRenderPerBatch={10}
             windowSize={10}
             initialNumToRender={15}
-            getItemLayout={(data, index) => ({
-              length: 80, // Approximate height of each item
-              offset: 80 * index,
-              index,
-            })}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 8 }}
+            contentContainerStyle={{ paddingVertical: 8 }}
             renderItem={({ item: product }) => (
               <ProductItem
                 product={product}
@@ -550,6 +490,8 @@ export default function ProductsScreen({ isGridView = false, onProductFormOpen, 
           </View>
         </View>
       )}
+
+
     </View>
   );
 }

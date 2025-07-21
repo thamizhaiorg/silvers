@@ -12,11 +12,9 @@ import CollectionsScreen from "../components/collections";
 import CollectionFormScreen from "../components/col-form";
 import ProductsManagementScreen from "../components/prod-mgmt";
 import CollectionsManagementScreen from "../components/col-mgmt";
-// Space screen removed
 import SquarePOS from "../components/square-pos";
 import ReportsScreen from "../components/reports";
 import ItemStock from "../components/item-stock";
-import Workspace from "../components/workspace";
 import Options from "../components/options";
 import MetafieldsSystem from "../components/metafields-system";
 import Locations from "../components/locations";
@@ -24,8 +22,8 @@ import ItemsScreen from "../components/items";
 import FilesScreen from "../components/files";
 import ProfileScreen from "../screens/profile";
 
-import { MainScreen } from "../components/nav";
-
+import BottomNavigation, { BottomTabScreen } from "../components/nav";
+import CartScreen from "../components/cart";
 
 import { StoreProvider } from "../lib/store-context";
 import { log, trackError } from "../lib/logger";
@@ -38,6 +36,7 @@ type Screen =
   | 'reports'
   | 'products'
   | 'collections'
+  | 'cart'
   | 'options'
   | 'metafields'
   | 'menu'
@@ -62,8 +61,8 @@ interface NavigationState {
 
 export default function Page() {
   const { user, isLoading } = useAuth();
-  const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
-  // Bottom navigation removed
+  // Always start with products screen as the home screen
+  const [currentScreen, setCurrentScreen] = useState<Screen>('products');
   const [isGridView, setIsGridView] = useState(false); // false = list view (default), true = grid view
   const [showManagement, setShowManagement] = useState(false); // false = product/collection list (default), true = management screen
   const [productFormProduct, setProductFormProduct] = useState<Product | null>(null); // Track product being edited in form
@@ -76,9 +75,12 @@ export default function Page() {
   const [optionSetData, setOptionSetData] = useState<{id?: string, name?: string}>({});
   const [navigationData, setNavigationData] = useState<NavigationData | null>(null);
 
-  // Navigation stack to track navigation history
+  // Bottom navigation state
+  const [activeBottomTab, setActiveBottomTab] = useState<BottomTabScreen>('home');
+
+  // Navigation stack to track navigation history - always start with products screen
   const [navigationStack, setNavigationStack] = useState<NavigationState[]>([{
-    screen: 'menu',
+    screen: 'products',
     showManagement: false
   }]);
 
@@ -151,37 +153,31 @@ export default function Page() {
           setNavigationData(null);
           return true;
         }
-        // For other screens or items without product context, go to menu
-        setCurrentScreen('menu');
+        // For other screens or items without product context, go to products screen
+        setCurrentScreen('products');
         setNavigationData(null);
         return true;
       }
 
-      // For menu screen, try to go back using navigation stack
-      if (currentScreen === 'menu') {
+      // For screens other than products, go back to products
+      if (currentScreen !== 'products') {
         const didGoBack = handleGoBack();
         if (didGoBack) {
           return true;
         }
-        // If no navigation history, go to menu
-        setCurrentScreen('menu');
+        // If no navigation history, go to products
+        setCurrentScreen('products');
         setShowManagement(false);
         return true;
       }
 
-      // Try to go back using navigation stack for other screens
-      const didGoBack = handleGoBack();
-      if (didGoBack) {
-        return true;
-      }
-
-      // If on menu and no navigation history, allow default back behavior (exit app)
-      if (currentScreen === 'menu') {
+      // If on products screen and no navigation history, allow default back behavior (exit app)
+      if (currentScreen === 'products') {
         return false;
       }
 
-      // Fallback: if navigation stack is empty or failed, go to menu
-      setCurrentScreen('menu');
+      // Fallback: if navigation stack is empty or failed, go to products
+      setCurrentScreen('products');
       setShowManagement(false);
       setNavigationData(null);
       return true;
@@ -238,6 +234,11 @@ export default function Page() {
       setIsCollectionFormOpen(false);
     }
 
+    // Always redirect 'menu' navigation to products screen
+    if (screen === 'menu') {
+      screen = 'products';
+    }
+
     // Save current state to navigation stack before navigating
     const currentState: NavigationState = {
       screen: currentScreen,
@@ -267,7 +268,26 @@ export default function Page() {
     });
   }, [currentScreen, showManagement, optionSetData, isProductFormOpen, isCollectionFormOpen]);
 
-  // Bottom navigation removed
+  // Handle bottom tab navigation
+  const handleBottomTabPress = useCallback((tab: BottomTabScreen) => {
+    setActiveBottomTab(tab);
+
+    // Map bottom tabs to screens
+    switch (tab) {
+      case 'home':
+        handleNavigate('products');
+        break;
+      case 'collections':
+        handleNavigate('collections');
+        break;
+      case 'cart':
+        handleNavigate('cart');
+        break;
+      case 'profile':
+        handleNavigate('profile');
+        break;
+    }
+  }, [handleNavigate]);
 
   const renderMainContent = () => {
     // If product form is open, render it full screen
@@ -320,20 +340,20 @@ export default function Page() {
       return <CollectionsManagementScreen />;
     }
 
-    // Bottom navigation removed
-
     // Otherwise render the main screens (default untoggled state)
     switch (currentScreen) {
-      // Space screen removed
       case 'sales':
-        return <SquarePOS onClose={() => handleNavigate('menu')} onOrderCreated={(orderId) => {
-          // Optionally handle order creation success
-          console.log('Order created:', orderId);
-        }} />;
+        return <SquarePOS 
+          onClose={() => handleNavigate('products')} 
+          onOrderCreated={(orderId) => {
+            // Optionally handle order creation success
+            console.log('Order created:', orderId);
+          }} 
+        />;
       case 'reports':
         return <ReportsScreen
-          onOpenMenu={() => handleNavigate('menu')}
-          onClose={() => handleNavigate('menu')}
+          onOpenMenu={() => handleNavigate('products')}
+          onClose={() => handleNavigate('products')}
         />;
       case 'products':
         return <ProductsScreen
@@ -346,24 +366,27 @@ export default function Page() {
             setProductFormProduct(null);
             setIsProductFormOpen(false);
           }}
-          onClose={() => handleNavigate('menu')}
+          onClose={() => {}} // No-op since products is now the home screen
         />;
       case 'collections':
         return <CollectionsScreen
           isGridView={isGridView}
           onOpenForm={openCollectionForm}
-          onClose={() => handleNavigate('menu')}
+          onClose={() => handleNavigate('products')}
+        />;
+      case 'cart':
+        return <CartScreen
+          onClose={() => handleNavigate('products')}
         />;
       case 'options':
         return <Options
-          onClose={() => handleNavigate('menu')}
-          onOpenMenu={() => handleNavigate('menu')}
+          onClose={() => handleNavigate('products')}
+          onOpenMenu={() => handleNavigate('products')}
         />;
       case 'metafields':
         return <MetafieldsSystem
-          onClose={() => handleNavigate('menu')}
+          onClose={() => handleNavigate('products')}
         />;
-
       case 'items':
         return <ItemsScreen
           isGridView={isGridView}
@@ -384,35 +407,35 @@ export default function Page() {
               setCurrentScreen('products');
               setNavigationData(null);
             } else {
-              handleNavigate('menu');
+              handleNavigate('products');
             }
           }}
           productId={navigationData?.productId} // Pass productId if provided in navigation data
         />;
       case 'locations':
         return <Locations
-          onClose={() => handleNavigate('menu')}
+          onClose={() => handleNavigate('products')}
         />;
-
       case 'files':
         return <FilesScreen
-          onClose={() => handleNavigate('menu')}
+          onClose={() => handleNavigate('products')}
         />;
-
       case 'profile':
-        return <ProfileScreen onClose={() => handleNavigate('menu')} />;
-
-
-
-      // Storefront screen removed
-
-      case 'menu':
-        return <Workspace
-          onNavigate={handleNavigate}
-          onClose={() => handleNavigate('menu')}
-        />;
+        return <ProfileScreen onClose={() => handleNavigate('products')} />;
+      // All other cases default to products screen
       default:
-        return <Workspace onNavigate={handleNavigate} onClose={() => handleNavigate('menu')} />;
+        return <ProductsScreen
+          isGridView={isGridView}
+          onProductFormOpen={(product) => {
+            setProductFormProduct(product);
+            setIsProductFormOpen(true);
+          }}
+          onProductFormClose={() => {
+            setProductFormProduct(null);
+            setIsProductFormOpen(false);
+          }}
+          onClose={() => {}} // No-op since products is now the home screen
+        />;
     }
   };
 
@@ -434,13 +457,13 @@ export default function Page() {
     <StoreProvider>
       <ErrorBoundary>
         <View className="flex flex-1">
-          {currentScreen === 'sales' || currentScreen === 'options' || currentScreen === 'metafields' || currentScreen === 'items' || currentScreen === 'locations' || currentScreen === 'files' || currentScreen === 'profile' || isProductFormOpen || isCollectionFormOpen || isItemStockOpen ? (
+          {currentScreen === 'sales' || currentScreen === 'options' || currentScreen === 'metafields' || currentScreen === 'items' || currentScreen === 'locations' || currentScreen === 'files' || isProductFormOpen || isCollectionFormOpen || isItemStockOpen ? (
             // Full screen screens without header or bottom navigation (including product and collection forms)
             <ErrorBoundary>
               {renderMainContent()}
             </ErrorBoundary>
           ) : (
-            // All other screens with header only (bottom navigation removed)
+            // Main app screens with header and bottom navigation
             <>
               <Header
                 currentScreen={currentScreen}
@@ -457,6 +480,14 @@ export default function Page() {
               <ErrorBoundary>
                 {renderMainContent()}
               </ErrorBoundary>
+              {/* Bottom Navigation for main screens */}
+              {(currentScreen === 'products' || currentScreen === 'collections' || currentScreen === 'cart' || currentScreen === 'profile') && (
+                <BottomNavigation
+                  activeTab={activeBottomTab}
+                  onTabPress={handleBottomTabPress}
+                  cartItemCount={0} // TODO: Connect to actual cart count
+                />
+              )}
             </>
           )}
         </View>
@@ -663,9 +694,6 @@ function Header({ currentScreen, onNavigate, isGridView, setIsGridView, showMana
     }
 
     switch (screen) {
-      // Space screen removed
-      case 'menu':
-        return { title: 'Workspace', icon: '🏢' };
       case 'products':
         return { title: 'Products', icon: '📦' };
       case 'collections':
@@ -676,14 +704,12 @@ function Header({ currentScreen, onNavigate, isGridView, setIsGridView, showMana
         return { title: 'Metafields', icon: '#' };
       case 'files':
         return { title: 'Files', icon: '📁' };
-      // Storefront removed
-
       case 'sales':
         return { title: 'Sales', icon: '💰' };
       case 'reports':
         return { title: 'Reports', icon: '📈' };
       default:
-        return { title: 'Square POS', icon: '☰' };
+        return { title: 'TAR POS', icon: '☰' };
     }
   };
 
