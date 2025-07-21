@@ -25,6 +25,7 @@ import AddressManagementScreen from "../screens/address-management";
 import AddressForm from "../components/address-form";
 import CheckoutScreen from "../components/checkout";
 import AddressSelector from "../components/address-selector";
+import CategoryProductsScreen from "../components/category-products";
 
 import BottomNavigation, { BottomTabScreen } from "../components/nav";
 import CartScreen from "../components/cart";
@@ -56,11 +57,14 @@ type Screen =
   | 'address-management'
   | 'address-form'
   | 'checkout'
-  | 'address-selector';
+  | 'address-selector'
+  | 'category';
 
 interface NavigationData {
   productId?: string;
   product?: Product;
+  categoryId?: string;
+  categoryName?: string;
   [key: string]: unknown;
 }
 
@@ -236,6 +240,11 @@ export default function Page() {
     setIsItemStockOpen(false);
   }, []);
 
+  const handleCategoryNavigation = useCallback((categoryId: string, categoryName?: string) => {
+    setNavigationData({ categoryId, categoryName });
+    setCurrentScreen('category');
+  }, []);
+
   const handleNavigate = useCallback((screen: Screen, data?: any) => {
     // If navigating from product form, close it first
     if (isProductFormOpen) {
@@ -376,6 +385,7 @@ export default function Page() {
           isGridView={isGridView}
           onClose={() => {}} // No-op since products is now the home screen
           onNavigateToCart={() => handleNavigate('cart')}
+          onNavigateToCategory={handleCategoryNavigation}
         />;
       case 'collections':
         return <CollectionsScreen
@@ -505,6 +515,16 @@ export default function Page() {
             />
           </>
         );
+      case 'category':
+        return <CategoryProductsScreen
+          categoryId={navigationData?.categoryId || ''}
+          categoryName={navigationData?.categoryName}
+          onClose={() => handleNavigate('products')}
+          onNavigateToProduct={(product) => {
+            // Handle product navigation if needed
+            console.log('Navigate to product:', product.id);
+          }}
+        />;
       // All other cases default to products screen
       default:
         return <ProductsScreen
