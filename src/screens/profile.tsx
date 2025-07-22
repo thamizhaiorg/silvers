@@ -3,16 +3,16 @@ import { View, Text, TouchableOpacity, TextInput, Alert, ScrollView, KeyboardAvo
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../lib/auth-context';
-
 import { userCustomerService } from '../services/user-customer-service';
 
 
 interface ProfileScreenProps {
   onClose?: () => void;
   onNavigateToAddresses?: () => void;
+  onNavigateToOrders?: () => void;
 }
 
-export default function ProfileScreen({ onClose, onNavigateToAddresses }: ProfileScreenProps) {
+export default function ProfileScreen({ onClose, onNavigateToAddresses, onNavigateToOrders }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
   const { user, peopleaProfile, createPeopleaProfile, updatePeopleaProfile, signOut, linkUserToCustomer } = useAuth();
   
@@ -32,6 +32,12 @@ export default function ProfileScreen({ onClose, onNavigateToAddresses }: Profil
     totalAddresses: 0,
     defaultAddress: null as any,
     recentAddresses: [] as any[]
+  });
+
+  // Order statistics state
+  const [orderStats, setOrderStats] = useState({
+    totalOrders: 0,
+    recentOrders: [] as any[]
   });
 
 
@@ -134,151 +140,118 @@ export default function ProfileScreen({ onClose, onNavigateToAddresses }: Profil
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-      style={{ paddingTop: insets.top }}
-    >
-      {/* Header */}
-      <View className="px-4 py-4 flex-row items-center justify-between bg-white border-b border-gray-200">
-        <Text className="text-xl font-bold text-gray-900">Profile</Text>
-        
-        {isEditing ? (
-          <View className="flex-row gap-3">
-            <TouchableOpacity onPress={handleCancel} disabled={isLoading}>
-              <Text className="text-gray-600 text-base">Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSave} disabled={isLoading}>
-              <Text className="text-blue-600 text-base font-medium">
-                {isLoading ? 'Saving...' : 'Save'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text className="text-blue-600 text-base font-medium">Edit</Text>
-          </TouchableOpacity>
-        )}
+    <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>
+      {/* Minimal Header */}
+      <View className="px-6 py-4 bg-white">
+        <Text className="text-2xl font-light text-gray-900">Profile</Text>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-6 py-6">
+        <View className="px-6 py-4">
 
-          {/* User Info */}
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-gray-500 mb-1">Email</Text>
-            <Text className="text-lg text-gray-900">{user?.email}</Text>
-          </View>
-
-          {/* Profile Form */}
-          <View className="space-y-6">
-            {/* Name Field */}
-            <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2">Name</Text>
-              {isEditing ? (
-                <TextInput
-                  value={formData.name}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
-                  placeholder="Enter your name"
-                  className="w-full px-4 py-3 bg-gray-50 rounded-lg text-base border border-gray-200"
-                  style={{ fontSize: 16 }}
-                />
-              ) : (
-                <Text className="text-base text-gray-900 py-3">
-                  {formData.name || peopleaProfile?.name || 'Not set'}
+          {/* User Card */}
+          <View className="bg-white rounded-2xl p-6 mb-4 shadow-sm">
+            <View className="flex-row items-center justify-between mb-4">
+              <View className="flex-1">
+                <Text className="text-lg font-medium text-gray-900 mb-1">
+                  {formData.name || peopleaProfile?.name || 'Your Name'}
                 </Text>
-              )}
-            </View>
-
-            {/* Phone Field */}
-            <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2">Phone</Text>
-              {isEditing ? (
-                <TextInput
-                  value={formData.phone}
-                  onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
-                  placeholder="Enter your phone number"
-                  keyboardType="phone-pad"
-                  className="w-full px-4 py-3 bg-gray-50 rounded-lg text-base border border-gray-200"
-                  style={{ fontSize: 16 }}
-                />
-              ) : (
-                <Text className="text-base text-gray-900 py-3">
-                  {formData.phone || peopleaProfile?.phone || 'Not set'}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          {/* Address Management Card */}
-          <View className="mt-6">
-            <Text className="text-lg font-semibold text-gray-900 mb-4">Delivery Addresses</Text>
-            <TouchableOpacity
-              onPress={onNavigateToAddresses}
-              className="bg-white rounded-xl p-6 border border-gray-200"
-            >
-              <View className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center">
-                  <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mr-4">
-                    <Feather name="map-pin" size={20} color="#10B981" />
-                  </View>
-                  <View>
-                    <Text className="text-base font-medium text-gray-900">
-                      {addressStats.totalAddresses} Address{addressStats.totalAddresses !== 1 ? 'es' : ''}
-                    </Text>
-                    <Text className="text-sm text-gray-500">
-                      {addressStats.defaultAddress ? 'Default address set' : 'No default address'}
-                    </Text>
-                  </View>
-                </View>
-                <Feather name="chevron-right" size={20} color="#9CA3AF" />
+                <Text className="text-gray-500">{user?.email}</Text>
               </View>
+              <TouchableOpacity
+                onPress={() => setIsEditing(!isEditing)}
+                className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
+              >
+                <Feather name={isEditing ? "check" : "edit-2"} size={18} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
 
-              {addressStats.defaultAddress ? (
+            {isEditing && (
+              <View className="space-y-4 pt-4 border-t border-gray-100">
                 <View>
-                  <Text className="text-sm font-medium text-gray-700 mb-2">Default Address</Text>
-                  <View className="bg-gray-50 rounded-lg p-3">
-                    <Text className="text-sm text-gray-900 font-medium">
-                      {addressStats.defaultAddress.firstName} {addressStats.defaultAddress.lastName}
-                    </Text>
-                    <Text className="text-sm text-gray-600">
-                      {addressStats.defaultAddress.address1}
-                    </Text>
-                    <Text className="text-sm text-gray-600">
-                      {addressStats.defaultAddress.city}, {addressStats.defaultAddress.province} {addressStats.defaultAddress.zip}
-                    </Text>
-                  </View>
+                  <TextInput
+                    value={formData.name}
+                    onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+                    placeholder="Your name"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl text-base"
+                    style={{ fontSize: 16 }}
+                  />
                 </View>
-              ) : (
-                <View className="py-4">
-                  <Text className="text-sm text-gray-500 text-center">
-                    Add your delivery addresses for faster checkout.
+                <View>
+                  <TextInput
+                    value={formData.phone}
+                    onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
+                    placeholder="Phone number"
+                    keyboardType="phone-pad"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl text-base"
+                    style={{ fontSize: 16 }}
+                  />
+                </View>
+                <TouchableOpacity
+                  onPress={handleSave}
+                  disabled={isLoading}
+                  className="bg-blue-600 rounded-xl py-3 items-center"
+                >
+                  <Text className="text-white font-medium">
+                    {isLoading ? 'Saving...' : 'Save Changes'}
                   </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
-          {/* Sign Out Button */}
-          <View className="mt-12 pt-8 border-t border-gray-200">
-            <TouchableOpacity
-              onPress={handleSignOut}
-              className="w-full py-4 bg-red-50 rounded-lg border border-red-200"
-            >
-              <Text className="text-red-600 text-center text-base font-medium">
-                Sign Out
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* My Orders Card */}
+          <TouchableOpacity
+            onPress={onNavigateToOrders}
+            className="bg-white rounded-2xl p-6 mb-4 shadow-sm"
+          >
+            <View className="flex-row items-center">
+              <View className="w-12 h-12 bg-blue-100 rounded-2xl items-center justify-center mr-4">
+                <Feather name="shopping-bag" size={20} color="#3B82F6" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-medium text-gray-900">My Orders</Text>
+                <Text className="text-gray-500">View order history</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#D1D5DB" />
+            </View>
+          </TouchableOpacity>
 
-          {/* App Info */}
-          <View className="mt-8 pt-6 border-t border-gray-100">
-            <Text className="text-xs text-gray-400 text-center">
-              TAR POS • Powered by InstantDB
-            </Text>
-          </View>
+          {/* Delivery Addresses Card */}
+          <TouchableOpacity
+            onPress={onNavigateToAddresses}
+            className="bg-white rounded-2xl p-6 mb-4 shadow-sm"
+          >
+            <View className="flex-row items-center">
+              <View className="w-12 h-12 bg-green-100 rounded-2xl items-center justify-center mr-4">
+                <Feather name="map-pin" size={20} color="#10B981" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-medium text-gray-900">Delivery Addresses</Text>
+                <Text className="text-gray-500">Manage shipping addresses</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#D1D5DB" />
+            </View>
+          </TouchableOpacity>
+
+          {/* Sign Out Card */}
+          <TouchableOpacity
+            onPress={handleSignOut}
+            className="bg-white rounded-2xl p-6 mb-8 shadow-sm"
+          >
+            <View className="flex-row items-center">
+              <View className="w-12 h-12 bg-red-100 rounded-2xl items-center justify-center mr-4">
+                <Feather name="log-out" size={20} color="#EF4444" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-medium text-red-600">Sign Out</Text>
+                <Text className="text-gray-500">Sign out of your account</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

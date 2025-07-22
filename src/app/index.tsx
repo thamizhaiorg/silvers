@@ -147,6 +147,11 @@ export default function Page() {
         return <ProfileScreen
           onClose={() => handleNavigate('products')}
           onNavigateToAddresses={() => handleNavigate('address-management')}
+          onNavigateToOrders={() => {
+            // For now, just show an alert since we removed order history
+            // You can implement a new orders screen here if needed
+            alert('Orders feature coming soon!');
+          }}
         />;
 
 
