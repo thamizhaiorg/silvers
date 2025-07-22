@@ -6,14 +6,14 @@ import AuthScreen from "../screens/auth";
 import ProductsScreen from "../components/products";
 import CollectionsScreen from "../components/collections";
 import ProfileScreen from "../screens/profile";
-import OrderHistoryScreen from "../screens/order-history";
-import OrderDetails from "../components/order-details";
-import OrderHistoryDebug from "../components/order-history-debug";
+
+
 import AddressManagementScreen from "../screens/address-management";
 import AddressForm from "../components/address-form";
 import CheckoutScreen from "../components/checkout";
 import AddressSelector from "../components/address-selector";
 import CategoryProductsScreen from "../components/category-products";
+import ProductDetailsScreen from "../components/product-details";
 import BottomNavigation, { BottomTabScreen } from "../components/nav";
 import CartScreen from "../components/cart";
 
@@ -25,18 +25,17 @@ type Screen =
   | 'collections'
   | 'cart'
   | 'profile'
-  | 'order-history'
-  | 'order-details'
-  | 'order-debug'
   | 'address-management'
   | 'address-form'
   | 'checkout'
   | 'address-selector'
-  | 'category';
+  | 'category'
+  | 'product-details';
 
 interface NavigationData {
   categoryId?: string;
   categoryName?: string;
+  product?: any;
   [key: string]: unknown;
 }
 
@@ -48,7 +47,7 @@ export default function Page() {
 
 
   const [navigationData, setNavigationData] = useState<NavigationData | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+
   const [selectedAddress, setSelectedAddress] = useState<any | null>(null);
   const [checkoutAddress, setCheckoutAddress] = useState<any | null>(null);
   const [showAddressSelector, setShowAddressSelector] = useState(false);
@@ -90,6 +89,11 @@ export default function Page() {
     setCurrentScreen('category');
   }, []);
 
+  const handleProductNavigation = useCallback((product: any) => {
+    setNavigationData({ product });
+    setCurrentScreen('product-details');
+  }, []);
+
   const handleNavigate = useCallback((screen: Screen, data?: any) => {
     setCurrentScreen(screen);
     setNavigationData(data); // Store the navigation data
@@ -127,6 +131,7 @@ export default function Page() {
           onClose={() => {}} // No-op since products is now the home screen
           onNavigateToCart={() => handleNavigate('cart')}
           onNavigateToCategory={handleCategoryNavigation}
+          onNavigateToProduct={handleProductNavigation}
         />;
       case 'collections':
         return <CollectionsScreen
@@ -141,30 +146,10 @@ export default function Page() {
       case 'profile':
         return <ProfileScreen
           onClose={() => handleNavigate('products')}
-          onNavigateToOrderHistory={() => handleNavigate('order-debug')}
           onNavigateToAddresses={() => handleNavigate('address-management')}
         />;
-      case 'order-history':
-        return <OrderHistoryScreen
-          onClose={() => handleNavigate('profile')}
-          onOrderSelect={(order) => {
-            setSelectedOrder(order);
-            handleNavigate('order-details');
-          }}
-        />;
-      case 'order-details':
-        return selectedOrder ? (
-          <OrderDetails
-            order={selectedOrder}
-            onClose={() => handleNavigate('order-history')}
-          />
-        ) : (
-          <View className="flex-1 items-center justify-center">
-            <Text>Order not found</Text>
-          </View>
-        );
-      case 'order-debug':
-        return <OrderHistoryDebug onClose={() => handleNavigate('profile')} />;
+
+
       case 'address-management':
         return <AddressManagementScreen
           onClose={() => handleNavigate('profile')}
@@ -218,11 +203,19 @@ export default function Page() {
           categoryId={navigationData?.categoryId || ''}
           categoryName={navigationData?.categoryName}
           onClose={() => handleNavigate('products')}
-          onNavigateToProduct={(product) => {
-            // Handle product navigation if needed
-            console.log('Navigate to product:', product.id);
-          }}
+          onNavigateToProduct={handleProductNavigation}
         />;
+      case 'product-details':
+        return navigationData?.product ? (
+          <ProductDetailsScreen
+            product={navigationData.product}
+            onClose={() => handleNavigate('products')}
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center">
+            <Text>Product not found</Text>
+          </View>
+        );
       // All other cases default to products screen
       default:
         return <ProductsScreen
@@ -248,7 +241,7 @@ export default function Page() {
 
   return (
     <ErrorBoundary>
-      <View className="flex flex-1">
+      <View className="flex-1">
         {/* All screens are now full-screen without header */}
         <ErrorBoundary>
           {renderMainContent()}

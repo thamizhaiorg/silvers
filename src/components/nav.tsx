@@ -82,8 +82,8 @@ export default function BottomNavigation({ activeTab, onTabPress, cartItemCount 
             >
               {renderIcon(tab, isActive)}
               <Text
-                className={`text-xs mt-1 ${
-                  isActive ? 'text-blue-600 font-medium' : 'text-gray-500'
+                className={`text-xs mt-1${
+                  isActive ? ' text-blue-600 font-medium' : ' text-gray-500'
                 }`}
               >
                 {tab.label}

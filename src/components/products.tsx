@@ -17,6 +17,7 @@ interface ProductsScreenProps {
   onClose?: () => void;
   onNavigateToCart?: () => void;
   onNavigateToCategory?: (categoryId: string, categoryName?: string) => void;
+  onNavigateToProduct?: (product: any) => void;
 }
 
 
@@ -39,7 +40,7 @@ const getCategoryIcon = (categoryName: string | undefined | null): string => {
 
 
 
-export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToCategory }: ProductsScreenProps) {
+export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToCategory, onNavigateToProduct }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,8 +112,12 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
 
   const handleProductPress = useCallback((product: any) => {
     // Navigate to product details view for customers
-    console.log('View product:', product.title);
-  }, []);
+    if (onNavigateToProduct) {
+      onNavigateToProduct(product);
+    } else {
+      console.log('View product:', product.title);
+    }
+  }, [onNavigateToProduct]);
 
 
 

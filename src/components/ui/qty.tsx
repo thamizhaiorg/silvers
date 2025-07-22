@@ -73,7 +73,7 @@ export default function QuantitySelector({
         className={`
           ${styles.button}
           ${canDecrease ? 'bg-gray-100' : 'bg-gray-50'}
-          ${canDecrease ? '' : 'opacity-50'}
+          ${!canDecrease ? 'opacity-50' : ''}
           items-center justify-center
         `}
       >
@@ -96,7 +96,7 @@ export default function QuantitySelector({
         className={`
           ${styles.button}
           ${canIncrease ? 'bg-gray-100' : 'bg-gray-50'}
-          ${canIncrease ? '' : 'opacity-50'}
+          ${!canIncrease ? 'opacity-50' : ''}
           items-center justify-center
         `}
       >

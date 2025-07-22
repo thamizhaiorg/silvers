@@ -167,8 +167,7 @@ npm start
 - **collections**: Browse products by collections/categories
 - **cart**: Shopping cart with quantity management
 - **checkout**: Purchase flow with address selection
-- **profile**: User account and order history
-- **order-history**: Past orders and order details
+- **profile**: User account management
 - **address-management**: Delivery address management
 
 ### Navigation & Layout

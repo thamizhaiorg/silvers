@@ -154,8 +154,8 @@ export default function CategoryScreen() {
               selectedProducts={new Set()}
               isMultiSelectMode={false}
               onProductPress={(product) => {
-                // Navigate to product details
-                console.log('Navigate to product:', product.id);
+                // Navigate to product details route
+                router.push(`/product/${product.id}`);
               }}
               onProductLongPress={(product) => {
                 // Handle long press if needed

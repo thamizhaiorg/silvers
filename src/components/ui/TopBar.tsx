@@ -36,8 +36,8 @@ export default function TopBar({
   const insets = useSafeAreaInsets();
 
   return (
-    <View 
-      className={`${backgroundColor} ${showDivider ? 'border-b border-gray-200' : ''}`}
+    <View
+      className={`${backgroundColor}${showDivider ? ' border-b border-gray-200' : ''}`}
       style={{ paddingTop: insets.top }}
     >
       <View className="px-4 py-4">
@@ -89,8 +89,8 @@ export default function TopBar({
               <TouchableOpacity
                 onPress={rightAction.onPress}
                 disabled={rightAction.disabled}
-                className={`flex-row items-center ${
-                  rightAction.disabled ? 'opacity-40' : ''
+                className={`flex-row items-center${
+                  rightAction.disabled ? ' opacity-40' : ''
                 }`}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
@@ -102,8 +102,8 @@ export default function TopBar({
                   />
                 )}
                 {rightAction.text && (
-                  <Text className={`text-base font-semibold ml-1 ${
-                    rightAction.disabled ? 'text-gray-400' : 'text-blue-600'
+                  <Text className={`text-base font-semibold ml-1${
+                    rightAction.disabled ? ' text-gray-400' : ' text-blue-600'
                   }`}>
                     {rightAction.text}
                   </Text>

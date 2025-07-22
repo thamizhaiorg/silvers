@@ -34,7 +34,7 @@ export default function R2Image({
     const loadSignedUrl = async () => {
       // Removed debug log
 
-      if (!url) {
+      if (!url || typeof url !== 'string') {
         // Removed warn log
         setLoading(false);
         return;
@@ -62,7 +62,7 @@ export default function R2Image({
         }
 
         // Check if it's already a signed URL or public URL
-        if (url.includes('X-Amz-Algorithm') || url.includes('Signature')) {
+        if (typeof url === 'string' && (url.includes('X-Amz-Algorithm') || url.includes('Signature'))) {
           // Already a signed URL
           setSignedUrl(url);
           // Cache it permanently

@@ -241,7 +241,6 @@ export class UserCustomerService {
   async linkUserProfileToCustomer(user: User, profileData: {
     name?: string;
     phone?: string;
-    bio?: string;
   }): Promise<{ success: boolean; customer?: Customer; error?: string }> {
     try {
       if (!user.email) {
@@ -261,8 +260,7 @@ export class UserCustomerService {
       // Update customer with profile data
       const updateResult = await this.updateCustomerProfile(result.customer.id, {
         name: profileData.name,
-        phone: profileData.phone,
-        notes: profileData.bio
+        phone: profileData.phone
       });
 
       if (!updateResult.success) {

@@ -62,9 +62,6 @@ export default function Input({
     }
   };
 
-  const borderColor = error ? '' : '';
-  const focusBorderColor = error ? '' : '';
-
   return (
     <View className="w-full">
       {label && (

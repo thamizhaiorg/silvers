@@ -97,7 +97,23 @@ export default function CheckoutScreen({
       const orderId = id();
       const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
       
-      // Create order data
+      // Create order data with properly mapped address
+      const mappedShippingAddress = {
+        id: selectedAddress.id,
+        name: selectedAddress.name,
+        firstName: selectedAddress.name?.split(' ')[0] || '',
+        lastName: selectedAddress.name?.split(' ').slice(1).join(' ') || '',
+        address1: selectedAddress.street,
+        street: selectedAddress.street,
+        city: selectedAddress.city,
+        province: selectedAddress.state,
+        state: selectedAddress.state,
+        zip: selectedAddress.zipCode,
+        zipCode: selectedAddress.zipCode,
+        country: selectedAddress.country || 'United States',
+        phone: selectedAddress.phone
+      };
+
       const orderData = {
         orderNumber,
         referenceId: orderId,
@@ -117,8 +133,8 @@ export default function CheckoutScreen({
         total: totals.total,
         totalPaid: 0,
         totalRefunded: 0,
-        shippingAddress: selectedAddress,
-        billingAddress: selectedAddress, // Use same address for billing
+        shippingAddress: mappedShippingAddress,
+        billingAddress: mappedShippingAddress, // Use same address for billing
         source: 'storefront',
         market: 'online',
       };

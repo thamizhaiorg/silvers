@@ -41,12 +41,11 @@ export default function AddressSelector({
 
   const formatAddress = (address: Address) => {
     const parts = [
-      address.address1,
-      address.address2,
-      `${address.city}, ${address.province} ${address.zip}`,
-      address.country
+      address.street,
+      `${address.city}, ${address.state} ${address.zipCode}`,
+      address.country || 'United States'
     ].filter(Boolean);
-    
+
     return parts.join('\n');
   };
 

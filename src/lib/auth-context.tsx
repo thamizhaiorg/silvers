@@ -20,9 +20,7 @@ interface PeopleaProfile {
   id: string;
   userId: string;
   name?: string;
-  profileImage?: string;
   phone?: string;
-  bio?: string;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -100,9 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const profileData = {
         userId: user.id,
         name: data.name || '',
-        profileImage: data.profileImage || '',
         phone: data.phone || '',
-        bio: data.bio || '',
         createdAt: now.getTime(),
         updatedAt: now.getTime(),
       };

@@ -196,10 +196,10 @@ export function ValidatedInput({
             }],
           }}
         >
-          <Text className="text-red-500 text-sm mt-1 flex-row items-center">
+          <View className="flex-row items-center mt-1">
             <MaterialIcons name="error" size={14} color="#EF4444" />
-            <Text className="ml-1">{error || validation.error}</Text>
-          </Text>
+            <Text className="text-red-500 text-sm ml-1">{error || validation.error}</Text>
+          </View>
         </Animated.View>
       )}
 
