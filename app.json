@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "tar",
-    "slug": "tarapp",
+    "name": "Silver",
+    "slug": "silverapp",
     "version": "1.0.0",
-    "scheme": "tar-pos",
+    "scheme": "silver-pos",
     "userInterfaceStyle": "automatic",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
       "android"
     ],
     "android": {
-      "package": "com.tarpos.app",
+      "package": "com.silver.app",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

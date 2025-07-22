@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -111,6 +112,7 @@ function CategoryCard({
   name,
   icon,
   itemCount,
+  imageUrl,
   onPress
 }: CategoryCardProps) {
   return (
@@ -120,8 +122,19 @@ function CategoryCard({
       style={{ width: 120 }}
     >
       <View className="items-center">
-        <View className="bg-silver-100 rounded-2xl p-4 mb-3">
-          <MaterialCommunityIcons name={icon as any} size={28} color="#378388" />
+        {/* Image container with rounded corners */}
+        <View className="w-16 h-16 rounded-2xl overflow-hidden mb-3 bg-silver-100">
+          {imageUrl ? (
+            <Image
+              source={imageUrl}
+              style={{ width: '100%', height: '100%' }}
+              contentFit="cover"
+            />
+          ) : (
+            <View className="w-full h-full bg-silver-100 items-center justify-center">
+              <MaterialCommunityIcons name={icon as any} size={28} color="#378388" />
+            </View>
+          )}
         </View>
         <Text className="text-gray-900 font-semibold text-sm text-center mb-1">
           {name}
@@ -142,6 +155,7 @@ interface CategorySliderProps {
     name: string;
     icon: string;
     itemCount?: number;
+    imageUrl?: string;
   }>;
   onCategoryPress: (categoryId: string) => void;
 }
@@ -166,6 +180,7 @@ export function CategorySlider({ categories, onCategoryPress }: CategorySliderPr
             name={category.name}
             icon={category.icon}
             itemCount={category.itemCount}
+            imageUrl={category.imageUrl}
             onPress={onCategoryPress}
           />
         )}

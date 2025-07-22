@@ -5,6 +5,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
 
 import ProductGrid, { EmptyProductGrid } from './ui/product-grid';
+import { Image } from 'expo-image';
 
 interface CategoryProductsScreenProps {
   categoryId: string;
@@ -33,21 +34,35 @@ export default function CategoryProductsScreen({
     return () => backHandler.remove();
   }, [onClose]);
 
-  // Query products and categories
+  // Query products only (removed categories query since we use hardcoded categories)
   const { isLoading, error, data } = db.useQuery({
     products: {
-      category: {}
-    },
-    categories: {}
+      $: {
+        order: {
+          createdAt: 'desc'
+        }
+      }
+    }
   });
 
   const products = data?.products || [];
-  const categories = data?.categories || [];
+
+  // Hardcoded categories with images (same as in products.tsx)
+  const categories = [
+    { id: 'chuttis', name: 'Chuttis', image: require('../../assets/categories/head2.jpg') },
+    { id: 'earrings', name: 'Earrings', image: require('../../assets/categories/earings.webp') },
+    { id: 'noserings', name: 'Nose rings', image: require('../../assets/categories/nose.jpg') },
+    { id: 'necklaces', name: 'Necklaces', image: require('../../assets/categories/necklace.webp') },
+    { id: 'bracelets', name: 'Bracelets', image: require('../../assets/categories/bracelets.webp') },
+    { id: 'hipchains', name: 'Hipchains', image: require('../../assets/categories/waistchain.webp') },
+    { id: 'anklets', name: 'Anklets', image: require('../../assets/categories/anklets.webp') }
+  ];
 
   // Find the current category
   const currentCategory = categories.find(cat => cat.id === categoryId) || {
     id: categoryId,
-    name: categoryName || 'Category'
+    name: categoryName || 'Category',
+    image: undefined
   };
 
   // Filter products by category and search
@@ -57,16 +72,15 @@ export default function CategoryProductsScreen({
     return products.filter((product: any) => {
       if (!product) return false;
 
-      // Category filter
-      const matchesCategory = product.categoryId === categoryId || 
-                             (product.category && product.category.id === categoryId);
+      // Category filter - check if product's categoryId matches the selected category
+      const matchesCategory = product.categoryId === categoryId;
 
       // Search filter
       const searchTerm = searchQuery.toLowerCase();
       const title = product.title || '';
       const tags = product.tags || [];
       const tagsString = Array.isArray(tags) ? tags.join(' ') : (typeof tags === 'string' ? tags : '');
-      
+
       const matchesSearch = !searchTerm || (
         title.toLowerCase().includes(searchTerm) ||
         tagsString.toLowerCase().includes(searchTerm) ||
@@ -100,45 +114,48 @@ export default function CategoryProductsScreen({
 
   return (
     <View className="flex-1 bg-gray-50" style={{ paddingTop: insets.top }}>
-      {/* Header */}
-      <View className="bg-[#378388] px-6 py-4">
-        <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity
-            onPress={onClose}
-            className="bg-white/20 p-2 rounded-full"
-          >
-            <Feather name="arrow-left" size={20} color="white" />
-          </TouchableOpacity>
-          
-          <View className="flex-1 mx-4">
-            <Text className="text-white text-xl font-bold text-center">
+      {/* Category Card with Search */}
+      <View className="bg-gray-50 px-6 pt-6 pb-4">
+        <View className="bg-[#378388] rounded-2xl p-6 shadow-sm">
+          {/* Category Image and Info */}
+          <View className="items-center mb-4">
+            <View className="w-24 h-24 rounded-2xl overflow-hidden mb-3 bg-white/20">
+              {currentCategory.image ? (
+                <Image
+                  source={currentCategory.image}
+                  style={{ width: '100%', height: '100%' }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View className="w-full h-full bg-white/20 items-center justify-center">
+                  <MaterialCommunityIcons name="diamond-stone" size={36} color="white" />
+                </View>
+              )}
+            </View>
+            <Text className="text-white font-bold text-2xl text-center mb-1">
               {currentCategory.name}
             </Text>
             <Text className="text-white/80 text-sm text-center">
-              {filteredProducts.length} products
+              Discover our beautiful collection
             </Text>
           </View>
-          
-          <TouchableOpacity className="bg-white/20 p-2 rounded-full">
-            <Feather name="search" size={20} color="white" />
-          </TouchableOpacity>
-        </View>
 
-        {/* Search Bar */}
-        <View className="bg-white/95 rounded-2xl px-4 py-3 flex-row items-center">
-          <Feather name="search" size={18} color="#378388" />
-          <TextInput
-            placeholder={`Search in ${currentCategory.name}...`}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            className="flex-1 text-base text-gray-900 ml-3"
-            placeholderTextColor="#9CA3AF"
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Feather name="x" size={16} color="#9CA3AF" />
-            </TouchableOpacity>
-          )}
+          {/* Search Bar */}
+          <View className="bg-white/95 rounded-2xl px-4 py-3 flex-row items-center">
+            <Feather name="search" size={18} color="#378388" />
+            <TextInput
+              placeholder={`Search in ${currentCategory.name}...`}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              className="flex-1 text-base text-gray-900 ml-3"
+              placeholderTextColor="#9CA3AF"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Feather name="x" size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
 
@@ -153,26 +170,6 @@ export default function CategoryProductsScreen({
           />
         ) : (
           <View className="bg-white flex-1">
-            {/* Category Info Banner */}
-            <View className="px-6 py-4 bg-silver-50 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <View className="bg-[#378388] rounded-full p-3 mr-4">
-                  <MaterialCommunityIcons 
-                    name="diamond-stone" 
-                    size={24} 
-                    color="white" 
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-lg font-semibold text-gray-900">
-                    {currentCategory.name}
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    Explore our collection of {currentCategory.name?.toLowerCase()}
-                  </Text>
-                </View>
-              </View>
-            </View>
 
             <ProductGrid
               products={filteredProducts}

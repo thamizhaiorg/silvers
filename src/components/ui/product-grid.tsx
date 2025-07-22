@@ -98,7 +98,7 @@ export default function ProductGrid({
 
 interface ProductGridHeaderProps {
   title: string;
-  itemCount: number;
+  itemCount?: number;
   onSortPress?: () => void;
   onFilterPress?: () => void;
 }
@@ -116,11 +116,13 @@ export function ProductGridHeader({
           <Text className="text-lg font-semibold text-gray-900">
             {title}
           </Text>
-          <Text className="text-sm text-gray-500 mt-1">
-            {itemCount} items
-          </Text>
+          {itemCount !== undefined && (
+            <Text className="text-sm text-gray-500 mt-1">
+              {itemCount} items
+            </Text>
+          )}
         </View>
-        
+
         <View className="flex-row gap-3">
           {onSortPress && (
             <TouchableOpacity
@@ -130,7 +132,7 @@ export function ProductGridHeader({
               <MaterialCommunityIcons name="sort" size={20} color="#6B7280" />
             </TouchableOpacity>
           )}
-          
+
           {onFilterPress && (
             <TouchableOpacity
               onPress={onFilterPress}

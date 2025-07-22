@@ -9,7 +9,7 @@ import { log, trackError, PerformanceMonitor } from '../lib/logger';
 import { LoadingError, EmptyState } from './ui/error-boundary';
 import HeroSection from './ui/hero-section';
 import ProductGrid, { ProductGridHeader, EmptyProductGrid } from './ui/product-grid';
-import { PromoSlider, CategorySlider, FlashSaleSlider } from './ui/promotional-sliders';
+import { PromoSlider, CategorySlider } from './ui/promotional-sliders';
 
 import R2Image from './ui/r2-image';
 
@@ -19,7 +19,7 @@ interface ProductsScreenProps {
   onNavigateToCategory?: (categoryId: string, categoryName?: string) => void;
 }
 
-type FilterCategory = 'All' | string; // 'All' or category ID
+
 
 // Note: ProductItem component moved to ProductGrid component for better organization
 
@@ -37,15 +37,17 @@ const getCategoryIcon = (categoryName: string | undefined | null): string => {
   return 'diamond-stone'; // default icon
 };
 
+
+
 export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToCategory }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterCategory>('All');
+
 
   // Removed custom BackHandler logic to allow default navigation behavior
 
-  // Query products with their items and categories
+  // Query products with their items (removed categories query)
   const { isLoading, error, data } = db.useQuery({
     products: {
       $: {
@@ -53,20 +55,22 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
           createdAt: 'desc' // Use consistent field naming
         }
       },
-      item: {}, // Keep item relationship as it's working
-      category: {} // Include category relationship
-    },
-    categories: {
-      $: {
-        order: {
-          name: 'asc'
-        }
-      }
+      item: {} // Keep item relationship as it's working
     }
   });
 
   const products = data?.products || [];
-  const categories = data?.categories || [];
+
+  // Hardcoded categories with their images
+  const categories = [
+    { id: 'chuttis', name: 'Chuttis', image: require('../../assets/categories/head2.jpg') },
+    { id: 'earrings', name: 'Earrings', image: require('../../assets/categories/earings.webp') },
+    { id: 'noserings', name: 'Nose rings', image: require('../../assets/categories/nose.jpg') },
+    { id: 'necklaces', name: 'Necklaces', image: require('../../assets/categories/necklace.webp') },
+    { id: 'bracelets', name: 'Bracelets', image: require('../../assets/categories/bracelets.webp') },
+    { id: 'hipchains', name: 'Hipchains', image: require('../../assets/categories/waistchain.webp') },
+    { id: 'anklets', name: 'Anklets', image: require('../../assets/categories/anklets.webp') }
+  ];
 
   // Log query errors
   if (error) {
@@ -75,7 +79,7 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
 
 
 
-  // Filter products based on search and category - memoized for performance
+  // Filter products based on search only - memoized for performance
   const filteredProducts = useMemo(() => {
     return PerformanceMonitor.measure('filter-products', () => {
       const searchTerm = searchQuery.toLowerCase();
@@ -96,21 +100,10 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
           (product.description || '').toLowerCase().includes(searchTerm)
         );
 
-        // Category filter
-        let matchesCategory = true;
-        if (activeFilter !== 'All' && activeFilter) {
-          // Filter by specific category ID or category name
-          matchesCategory = product.categoryId === activeFilter ||
-                           (product.category && product.category.id === activeFilter) ||
-                           (product.category && product.category.name && activeFilter &&
-                            product.category.name.toLowerCase() === activeFilter.toLowerCase());
-        }
-        // 'All' filter shows everything (matchesCategory remains true)
-
-        return matchesSearch && matchesCategory;
+        return matchesSearch;
       });
     });
-  }, [products, searchQuery, activeFilter]);
+  }, [products, searchQuery]);
 
 
 
@@ -216,9 +209,6 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
         <HeroSection
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onCategoryPress={(categoryId) => {
-            setActiveFilter(categoryId === 'All' ? 'All' : categoryId);
-          }}
           onNavigateToCart={onNavigateToCart}
           cartItemCount={0}
         />
@@ -258,11 +248,11 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
 
         {/* Category Slider */}
         <CategorySlider
-          categories={(categories || []).map(category => ({
-            id: category?.id || '',
-            name: category?.name || 'Unknown',
-            icon: getCategoryIcon(category?.name),
-            itemCount: (products || []).filter(p => p?.categoryId === category?.id).length
+          categories={categories.map(category => ({
+            id: category.id,
+            name: category.name,
+            icon: getCategoryIcon(category.name),
+            imageUrl: category.image
           }))}
           onCategoryPress={(categoryId) => {
             if (categoryId && onNavigateToCategory) {
@@ -272,80 +262,23 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
           }}
         />
 
-        {/* Flash Sale Slider */}
-        <FlashSaleSlider
-          sales={[
-            {
-              id: 'flash-1',
-              title: 'Silver Ring Collection',
-              originalPrice: 299,
-              salePrice: 199,
-              timeLeft: '2h 15m left'
-            },
-            {
-              id: 'flash-2',
-              title: 'Elegant Necklace Set',
-              originalPrice: 450,
-              salePrice: 299,
-              timeLeft: '1h 45m left'
-            }
-          ]}
-          onSalePress={(saleId) => {
-            console.log('Flash sale pressed:', saleId);
-            // Handle flash sale navigation
-          }}
-        />
 
 
-
-        {/* Category Filter Tabs */}
-        <View className="bg-white py-4 mb-2">
-          <FlatList
-            data={[{ id: 'All', name: 'All' }, ...categories]}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => setActiveFilter(item.id)}
-                onLongPress={() => {
-                  if (item.id !== 'All' && onNavigateToCategory) {
-                    // Long press to navigate to category screen
-                    onNavigateToCategory(item.id, item.name);
-                  }
-                }}
-                className={`mr-3 px-5 py-3 rounded-full ${
-                  activeFilter === item.id
-                    ? 'bg-silver-500 shadow-sm'
-                    : 'bg-gray-100'
-                }`}
-              >
-                <Text className={`text-sm font-medium ${
-                  activeFilter === item.id ? 'text-white' : 'text-gray-600'
-                }`}>
-                  {item.name}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
 
         {/* Products Section */}
         <View className="bg-white flex-1">
           {/* Section Header */}
           <ProductGridHeader
-            title={activeFilter === 'All' ? 'All Products' : `${activeFilter} Collection`}
-            itemCount={filteredProducts.length}
+            title="New Arrivals"
           />
 
           {/* Products Grid or Empty State */}
           {filteredProducts.length === 0 ? (
             <EmptyProductGrid
               searchQuery={searchQuery}
-              activeFilter={activeFilter}
+              activeFilter=""
               onClearSearch={() => setSearchQuery('')}
-              onClearFilter={() => setActiveFilter('All')}
+              onClearFilter={() => {}}
             />
           ) : (
             <ProductGrid
