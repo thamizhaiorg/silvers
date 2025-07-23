@@ -171,9 +171,7 @@ export interface Order extends BaseEntity {
 // Enhanced OrderItem interface
 export interface OrderItem {
   id: string;
-  // Required fields
-  orderId: string;
-  storeId: string;
+  // Required fields - orderId and storeId removed for single store app
   title: string;
   quantity: number; // Standardized from qty
   price: number;

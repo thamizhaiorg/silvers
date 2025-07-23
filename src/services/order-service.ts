@@ -209,10 +209,9 @@ export class OrderService {
         updatedAt: timestamp,
       };
 
-      // Create order items with standardized field names
+      // Create order items without orderId - will use relationship linking
       const orderItems = orderData.items.map(item => ({
         id: id(),
-        orderId: newOrderId,
         productId: item.productId,
         itemId: item.itemId,
         title: item.title,
@@ -225,10 +224,14 @@ export class OrderService {
         taxRate: item.taxRate,
       }));
 
-      // Execute transaction
+      // Execute transaction with relationship linking
       const transactions = [
         db.tx.orders[newOrderId].update(order),
-        ...orderItems.map(item => db.tx.orderitems[item.id].update(item))
+        ...orderItems.map(item => db.tx.orderitems[item.id].update(item)),
+        // Link order items to order using the relationship
+        ...orderItems.map(item =>
+          db.tx.orders[newOrderId].link({ orderitems: item.id })
+        )
       ];
 
       await db.transact(transactions);

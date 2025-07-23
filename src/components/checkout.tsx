@@ -139,11 +139,11 @@ export default function CheckoutScreen({
         market: 'online',
       };
 
-      // Create order items
-      const orderItemTransactions = cartItems.map(item => {
-        const itemId = id();
+      // Create order items without orderId - will use relationship linking
+      const orderItemIds = cartItems.map(() => id());
+      const orderItemTransactions = cartItems.map((item, index) => {
+        const itemId = orderItemIds[index];
         return db.tx.orderitems[itemId].update({
-          orderId: orderId,
           productId: item.productId,
           itemId: item.itemId,
           sku: item.sku,
@@ -159,10 +159,14 @@ export default function CheckoutScreen({
         });
       });
 
-      // Execute transaction
+      // Execute transaction with relationship linking
       await db.transact([
         db.tx.orders[orderId].update(orderData),
-        ...orderItemTransactions
+        ...orderItemTransactions,
+        // Link order items to order using the relationship
+        ...orderItemIds.map(itemId =>
+          db.tx.orders[orderId].link({ orderitems: itemId })
+        )
       ]);
 
       // Update customer stats if customer exists

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Text, View, BackHandler } from "react-native";
+import { Text, View, BackHandler, Alert } from "react-native";
 import { useAuth } from "../lib/auth-context";
 import { useCart } from "../lib/cart-context";
 import AuthScreen from "../screens/auth";
@@ -16,6 +16,9 @@ import CategoryProductsScreen from "../components/category-products";
 import ProductDetailsScreen from "../components/product-details";
 import BottomNavigation, { BottomTabScreen } from "../components/nav";
 import CartScreen from "../components/cart";
+import MyOrdersScreen from "../screens/my-orders";
+import OrderDetailsScreen from "../screens/order-details";
+import { formatCurrency } from "../lib/order-calculations";
 
 import ErrorBoundary from "../components/ui/error-boundary";
 
@@ -30,12 +33,15 @@ type Screen =
   | 'checkout'
   | 'address-selector'
   | 'category'
-  | 'product-details';
+  | 'product-details'
+  | 'my-orders'
+  | 'order-details';
 
 interface NavigationData {
   categoryId?: string;
   categoryName?: string;
   product?: any;
+  order?: any;
   [key: string]: unknown;
 }
 
@@ -147,11 +153,7 @@ export default function Page() {
         return <ProfileScreen
           onClose={() => handleNavigate('products')}
           onNavigateToAddresses={() => handleNavigate('address-management')}
-          onNavigateToOrders={() => {
-            // For now, just show an alert since we removed order history
-            // You can implement a new orders screen here if needed
-            alert('Orders feature coming soon!');
-          }}
+          onNavigateToOrders={() => handleNavigate('my-orders')}
         />;
 
 
@@ -219,6 +221,25 @@ export default function Page() {
         ) : (
           <View className="flex-1 items-center justify-center">
             <Text>Product not found</Text>
+          </View>
+        );
+      case 'my-orders':
+        return <MyOrdersScreen
+          onClose={() => handleNavigate('profile')}
+          onOrderSelect={(order) => {
+            setNavigationData({ order });
+            handleNavigate('order-details');
+          }}
+        />;
+      case 'order-details':
+        return navigationData?.order ? (
+          <OrderDetailsScreen
+            order={navigationData.order}
+            onClose={() => handleNavigate('my-orders')}
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center">
+            <Text>Order not found</Text>
           </View>
         );
       // All other cases default to products screen

@@ -221,13 +221,16 @@ export function updateItemQuantity(
 /**
  * Format currency for display
  */
-export function formatCurrency(amount: number, currency = 'USD'): string {
+export function formatCurrency(amount: number | null | undefined, currency = 'USD'): string {
+  // Handle null, undefined, or NaN values
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(safeAmount);
 }
 
 /**
