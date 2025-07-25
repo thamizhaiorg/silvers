@@ -8,8 +8,8 @@ interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onCategoryPress?: (category: string) => void;
-  onNavigateToCart?: () => void;
-  cartItemCount?: number;
+  onNavigateToFavorites?: () => void;
+  favoritesCount?: number;
 }
 
 
@@ -18,8 +18,8 @@ export default function HeroSection({
   searchQuery,
   onSearchChange,
   onCategoryPress,
-  onNavigateToCart,
-  cartItemCount = 0,
+  onNavigateToFavorites,
+  favoritesCount = 0,
 }: HeroSectionProps) {
 
   return (
@@ -37,16 +37,16 @@ export default function HeroSection({
             </Text>
           </View>
 
-          {/* Cart Button */}
+          {/* Favorites Button */}
           <TouchableOpacity
-            onPress={onNavigateToCart}
+            onPress={onNavigateToFavorites}
             className="relative bg-white/20 p-3 rounded-full"
           >
-            <Feather name="shopping-bag" size={22} color="white" />
-            {cartItemCount > 0 && (
+            <Feather name="heart" size={22} color="white" />
+            {favoritesCount > 0 && (
               <View className="absolute -top-2 -right-2 bg-red-500 rounded-full min-w-[18px] h-4 items-center justify-center">
                 <Text className="text-white text-xs font-bold">
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                  {favoritesCount > 99 ? '99+' : favoritesCount}
                 </Text>
               </View>
             )}

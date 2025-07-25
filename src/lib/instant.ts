@@ -1,5 +1,5 @@
 // Instant DB configuration and initialization
-import { init } from '@instantdb/react-native';
+import { init, id } from '@instantdb/react-native';
 import schema from '../../instant.schema';
 
 // Get the app ID from environment variables
@@ -14,6 +14,9 @@ export const db = init({
   appId: APP_ID,
   schema,
 });
+
+// Export the id function for generating unique IDs
+export { id };
 
 // Export types for use throughout the app
 export type { AppSchema } from '../../instant.schema';

@@ -370,6 +370,11 @@ const _schema = i.schema({
     vendors: i.entity({
       name: i.string().unique().indexed(),
     }),
+    favorites: i.entity({
+      createdAt: i.date().indexed(),
+      productId: i.string().indexed(),
+      userId: i.string().indexed(),
+    }),
   },
   links: {
     cart$users: {
@@ -574,6 +579,30 @@ const _schema = i.schema({
         on: "items",
         has: "one",
         label: "product",
+      },
+    },
+    favorites$users: {
+      forward: {
+        on: "favorites",
+        has: "one",
+        label: "$users",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "favorites",
+      },
+    },
+    favoritesProduct: {
+      forward: {
+        on: "favorites",
+        has: "one",
+        label: "product",
+      },
+      reverse: {
+        on: "products",
+        has: "many",
+        label: "favorites",
       },
     },
   },

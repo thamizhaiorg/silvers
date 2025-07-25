@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { db } from '../lib/instant';
 
@@ -56,16 +56,15 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-      style={{ paddingTop: insets.top }}
+      style={[styles.container, { paddingTop: insets.top }]}
     >
-      <View className="flex-1 px-6 justify-center">
+      <View style={styles.content}>
         {/* Header */}
-        <View className="mb-12">
-          <Text className="text-3xl font-bold text-gray-900 mb-2">
+        <View style={styles.header}>
+          <Text style={styles.title}>
             {step === 'email' ? 'Welcome' : 'Verify Code'}
           </Text>
-          <Text className="text-lg text-gray-600">
+          <Text style={styles.subtitle}>
             {step === 'email' 
               ? 'Enter your email to get started' 
               : `We sent a code to ${email}`
@@ -75,9 +74,9 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
         {step === 'email' ? (
           /* Email Step */
-          <View className="space-y-6">
-            <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
                 Email Address
               </Text>
               <TextInput
@@ -87,28 +86,26 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                className="w-full px-4 py-4 bg-gray-50 rounded-lg text-lg"
-                style={{ fontSize: 16 }}
+                style={styles.input}
+                placeholderTextColor="#9CA3AF"
               />
             </View>
 
             <TouchableOpacity
               onPress={handleSendCode}
               disabled={isLoading}
-              className={`w-full py-4 rounded-lg ${
-                isLoading ? 'bg-gray-300' : 'bg-black'
-              }`}
+              style={[styles.button, isLoading && styles.buttonDisabled]}
             >
-              <Text className="text-white text-center text-lg font-medium">
+              <Text style={styles.buttonText}>
                 {isLoading ? 'Sending...' : 'Continue'}
               </Text>
             </TouchableOpacity>
           </View>
         ) : (
           /* Code Step */
-          <View className="space-y-6">
-            <View>
-              <Text className="text-sm font-medium text-gray-700 mb-2">
+          <View style={styles.form}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>
                 Verification Code
               </Text>
               <TextInput
@@ -117,19 +114,17 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                 placeholder="Enter 6-digit code"
                 keyboardType="number-pad"
                 maxLength={6}
-                className="w-full px-4 py-4 bg-gray-50 rounded-lg text-lg text-center"
-                style={{ fontSize: 24, letterSpacing: 4 }}
+                style={[styles.input, styles.codeInput]}
+                placeholderTextColor="#9CA3AF"
               />
             </View>
 
             <TouchableOpacity
               onPress={handleVerifyCode}
               disabled={isLoading}
-              className={`w-full py-4 rounded-lg ${
-                isLoading ? 'bg-gray-300' : 'bg-black'
-              }`}
+              style={[styles.button, isLoading && styles.buttonDisabled]}
             >
-              <Text className="text-white text-center text-lg font-medium">
+              <Text style={styles.buttonText}>
                 {isLoading ? 'Verifying...' : 'Verify'}
               </Text>
             </TouchableOpacity>
@@ -137,9 +132,9 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <TouchableOpacity
               onPress={handleBackToEmail}
               disabled={isLoading}
-              className="w-full py-3"
+              style={styles.linkButton}
             >
-              <Text className="text-gray-600 text-center text-base">
+              <Text style={styles.linkText}>
                 Back to email
               </Text>
             </TouchableOpacity>
@@ -147,9 +142,9 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <TouchableOpacity
               onPress={handleSendCode}
               disabled={isLoading}
-              className="w-full py-3"
+              style={styles.linkButton}
             >
-              <Text className="text-gray-600 text-center text-base">
+              <Text style={styles.linkText}>
                 Resend code
               </Text>
             </TouchableOpacity>
@@ -157,8 +152,8 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         )}
 
         {/* Footer */}
-        <View className="mt-12">
-          <Text className="text-sm text-gray-500 text-center">
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
             By continuing, you agree to our Terms of Service
           </Text>
         </View>
@@ -166,3 +161,84 @@ export default function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     </KeyboardAvoidingView>
   );
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+  },
+  header: {
+    marginBottom: 48,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#6B7280',
+  },
+  form: {
+    gap: 24,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  input: {
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    fontSize: 16,
+    color: '#111827',
+  },
+  codeInput: {
+    textAlign: 'center',
+    fontSize: 24,
+    letterSpacing: 4,
+  },
+  button: {
+    width: '100%',
+    paddingVertical: 16,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  linkButton: {
+    width: '100%',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#6B7280',
+    fontSize: 16,
+  },
+  footer: {
+    marginTop: 48,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+});

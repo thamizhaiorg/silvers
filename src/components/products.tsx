@@ -3,7 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, Modal, Animat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, formatCurrency } from '../lib/instant';
-
+import { useAuth } from '../lib/auth-context';
+import { useFavorites } from '../hooks/useFavorites';
 
 import { log, trackError, PerformanceMonitor } from '../lib/logger';
 import { LoadingError, EmptyState } from './ui/error-boundary';
@@ -16,6 +17,7 @@ import R2Image from './ui/r2-image';
 interface ProductsScreenProps {
   onClose?: () => void;
   onNavigateToCart?: () => void;
+  onNavigateToFavorites?: () => void;
   onNavigateToCategory?: (categoryId: string, categoryName?: string) => void;
   onNavigateToProduct?: (product: any) => void;
 }
@@ -40,11 +42,12 @@ const getCategoryIcon = (categoryName: string | undefined | null): string => {
 
 
 
-export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToCategory, onNavigateToProduct }: ProductsScreenProps) {
+export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateToFavorites, onNavigateToCategory, onNavigateToProduct }: ProductsScreenProps) {
   const insets = useSafeAreaInsets();
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const { user } = useAuth();
+  const { favoritesCount } = useFavorites();
 
   // Removed custom BackHandler logic to allow default navigation behavior
 
@@ -214,8 +217,8 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
         <HeroSection
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onNavigateToCart={onNavigateToCart}
-          cartItemCount={0}
+          onNavigateToFavorites={onNavigateToFavorites}
+          favoritesCount={favoritesCount}
         />
 
         {/* Promotional Offers Slider */}

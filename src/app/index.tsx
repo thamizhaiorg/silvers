@@ -6,6 +6,7 @@ import AuthScreen from "../screens/auth";
 import ProductsScreen from "../components/products";
 import CollectionsScreen from "../components/collections";
 import ProfileScreen from "../screens/profile";
+import FavoritesScreen from "../screens/favorites";
 
 
 import AddressManagementScreen from "../screens/address-management";
@@ -28,6 +29,7 @@ type Screen =
   | 'collections'
   | 'cart'
   | 'profile'
+  | 'favorites'
   | 'address-management'
   | 'address-form'
   | 'checkout'
@@ -136,6 +138,7 @@ export default function Page() {
         return <ProductsScreen
           onClose={() => {}} // No-op since products is now the home screen
           onNavigateToCart={() => handleNavigate('cart')}
+          onNavigateToFavorites={() => handleNavigate('favorites')}
           onNavigateToCategory={handleCategoryNavigation}
           onNavigateToProduct={handleProductNavigation}
         />;
@@ -154,6 +157,11 @@ export default function Page() {
           onClose={() => handleNavigate('products')}
           onNavigateToAddresses={() => handleNavigate('address-management')}
           onNavigateToOrders={() => handleNavigate('my-orders')}
+        />;
+      case 'favorites':
+        return <FavoritesScreen
+          onClose={() => handleNavigate('products')}
+          onNavigateToProduct={handleProductNavigation}
         />;
 
 
@@ -247,6 +255,7 @@ export default function Page() {
         return <ProductsScreen
           onClose={() => {}} // No-op since products is now the home screen
           onNavigateToCart={() => handleNavigate('cart')}
+          onNavigateToFavorites={() => handleNavigate('favorites')}
         />;
     }
   };

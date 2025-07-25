@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { formatCurrency, db } from '../lib/instant';
 import { useCart } from '../lib/cart-context';
+import { useFavorites } from '../hooks/useFavorites';
 import R2Image from './ui/r2-image';
 import QuantitySelector from './ui/qty';
 
@@ -22,10 +23,13 @@ interface ProductOption {
 export default function ProductDetailsScreen({ product, onClose }: ProductDetailsProps) {
   const insets = useSafeAreaInsets();
   const { addItem } = useCart();
+  const { isFavorited, toggleFavorite, isLoading: favoritesLoading } = useFavorites();
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const isProductFavorited = isFavorited(product.id);
 
   // Query product items (variants)
   const { data: itemData } = db.useQuery({
@@ -177,8 +181,17 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
           <Text className="text-lg font-semibold text-gray-900 flex-1" numberOfLines={1}>
             {product.title}
           </Text>
-          <TouchableOpacity className="ml-4">
-            <Feather name="heart" size={24} color="#D1D5DB" />
+          <TouchableOpacity 
+            className="ml-4 bg-white p-2 rounded-full shadow-sm"
+            onPress={() => toggleFavorite(product.id, product.title)}
+            disabled={favoritesLoading}
+          >
+            <Feather 
+              name="heart" 
+              size={20} 
+              color={isProductFavorited ? "#EF4444" : "#D1D5DB"}
+              fill={isProductFavorited ? "#EF4444" : "transparent"}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -288,7 +301,10 @@ export default function ProductDetailsScreen({ product, onClose }: ProductDetail
       </ScrollView>
 
       {/* Add to Cart Button */}
-      <View className="px-6 py-4 bg-white border-t border-gray-100">
+      <View 
+        className="px-6 py-4 bg-white border-t border-gray-100"
+        style={{ paddingBottom: Math.max(16, insets.bottom) }}
+      >
         <TouchableOpacity
           onPress={handleAddToCart}
           disabled={isLoading}
