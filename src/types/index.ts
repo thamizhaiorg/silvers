@@ -1,4 +1,4 @@
-// Main types export file for TAR POS
+// Main types export file for Silvers
 // Provides centralized access to all TypeScript interfaces
 
 // Database entity types

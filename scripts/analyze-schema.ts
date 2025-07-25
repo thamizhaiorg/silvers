@@ -53,7 +53,7 @@ Examples:
 }
 
 function main() {
-  console.log('🚀 TAR POS Schema Analysis Tool');
+  console.log('🚀 Silvers Schema Analysis Tool');
   console.log('================================\n');
 
   if (flags.help) {

@@ -88,7 +88,7 @@ const storeInChunks = async (key: string, data: any, chunkSize = 1000000) => {
 };
 ```
 
-### 3. Hybrid Approach for TAR POS
+### 3. Hybrid Approach for Silvers
 
 Given your InstantDB setup, consider this strategy:
 
@@ -109,7 +109,7 @@ const storageStrategy = {
 };
 ```
 
-## For TAR POS App
+## For Silvers App
 
 Since you're already using InstantDB for real-time data, recommended approach:
 

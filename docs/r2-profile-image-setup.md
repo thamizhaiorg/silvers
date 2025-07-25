@@ -1,7 +1,7 @@
 # R2 Profile Image Upload Setup Guide
 
 ## Overview
-This document outlines the complete setup and implementation of Cloudflare R2 storage for profile image uploads in the TAR POS application. The system handles image upload, storage, and display with proper error handling and signed URL generation for private buckets.
+This document outlines the complete setup and implementation of Cloudflare R2 storage for profile image uploads in the Silvers application. The system handles image upload, storage, and display with proper error handling and signed URL generation for private buckets.
 
 ## Architecture
 

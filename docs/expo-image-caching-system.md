@@ -2,7 +2,7 @@
 
 ## Overview
 
-TAR POS uses Expo Image throughout the application with a permanent caching system for optimal performance. All image displays leverage Expo Image's built-in optimizations combined with our custom R2Image wrapper component.
+Silvers uses Expo Image throughout the application with a permanent caching system for optimal performance. All image displays leverage Expo Image's built-in optimizations combined with our custom R2Image wrapper component.
 
 ## Implementation Status
 

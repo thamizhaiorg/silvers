@@ -1,8 +1,8 @@
-# TAR POS Database Schema Documentation
+# Silvers Database Schema Documentation
 
 ## Overview
 
-This document provides comprehensive documentation for the TAR POS InstantDB schema, including all entity relationships, field purposes, and migration guidance. The schema has been optimized for performance, data consistency, and proper relationships.
+This document provides comprehensive documentation for the Silvers InstantDB schema, including all entity relationships, field purposes, and migration guidance. The schema has been optimized for performance, data consistency, and proper relationships.
 
 ## Schema Version
 

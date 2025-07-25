@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Inventory Adjustment Audit System provides comprehensive tracking and auditing capabilities for all inventory movements in the TAR POS system. This system ensures complete accountability, regulatory compliance, and operational transparency for all stock adjustments.
+The Inventory Adjustment Audit System provides comprehensive tracking and auditing capabilities for all inventory movements in the Silvers system. This system ensures complete accountability, regulatory compliance, and operational transparency for all stock adjustments.
 
 ## Features
 

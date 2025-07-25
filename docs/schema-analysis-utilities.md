@@ -1,6 +1,6 @@
 # Schema Analysis and Validation Utilities
 
-This document describes the schema analysis and validation utilities created for the TAR POS database schema optimization project.
+This document describes the schema analysis and validation utilities created for the Silvers database schema optimization project.
 
 ## Overview
 

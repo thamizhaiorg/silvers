@@ -1,8 +1,8 @@
-# TAR POS Database Development Best Practices
+# Silvers Database Development Best Practices
 
 ## Overview
 
-This document establishes best practices for database schema development, query optimization, and data validation in the TAR POS system. These guidelines ensure consistency, performance, and maintainability across the application.
+This document establishes best practices for database schema development, query optimization, and data validation in the Silvers system. These guidelines ensure consistency, performance, and maintainability across the application.
 
 ## Schema Design Principles
 

@@ -1,4 +1,4 @@
-// Enhanced TypeScript interfaces for TAR POS database schema
+// Enhanced TypeScript interfaces for Silvers database schema
 // Generated from optimized InstantDB schema
 
 // Base types for common fields

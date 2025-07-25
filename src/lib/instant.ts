@@ -13,6 +13,8 @@ if (!APP_ID) {
 export const db = init({
   appId: APP_ID,
   schema,
+  // Disable debug logging in development
+  debug: false,
 });
 
 // Export the id function for generating unique IDs
