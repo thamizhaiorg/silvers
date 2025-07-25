@@ -225,25 +225,16 @@ export default function ProductsScreen({ onClose, onNavigateToCart, onNavigateTo
         <PromoSlider
           offers={[
             {
-              id: 'new-collection',
-              title: 'New Collection',
-              subtitle: 'Discover our latest handcrafted silver pieces',
-              discount: 'NEW',
+              id: 'latest-collection',
+              title: 'Latest Collection',
+              subtitle: 'Explore our newest handcrafted silver jewelry designs',
               backgroundColor: 'bg-[#378388]',
               textColor: 'text-white'
             },
             {
-              id: 'summer-sale',
-              title: 'Summer Sale',
-              subtitle: 'Up to 30% off on selected jewelry',
-              discount: '30% OFF',
-              backgroundColor: 'bg-[#378388]',
-              textColor: 'text-white'
-            },
-            {
-              id: 'free-shipping',
-              title: 'Free Shipping',
-              subtitle: 'On orders over $100',
+              id: 'customized-designs',
+              title: 'Customized Designs',
+              subtitle: 'Create unique pieces tailored just for you',
               backgroundColor: 'bg-[#378388]',
               textColor: 'text-white'
             }

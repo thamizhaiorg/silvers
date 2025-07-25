@@ -45,18 +45,7 @@ function OfferCard({
           </Text>
         </View>
         
-        <View className="flex-row items-center justify-between mt-4">
-          <TouchableOpacity className="bg-white/20 px-4 py-2 rounded-full">
-            <Text className={`${textColor} font-semibold text-sm`}>
-              Shop Now
-            </Text>
-          </TouchableOpacity>
-          <MaterialCommunityIcons 
-            name="arrow-right" 
-            size={20} 
-            color={textColor.includes('white') ? 'white' : '#374151'} 
-          />
-        </View>
+
       </View>
     </TouchableOpacity>
   );
